@@ -103,6 +103,21 @@ dialog h2 { margin: 0 0 4px; }
 .chip small { font-family: var(--ui); color: var(--muted); font-size: .8rem; }
 .page-title { font-family: var(--he); font-size: 1.6rem; font-weight: 700; margin: 0; }
 #pageBody details { margin-top: 10px; }
+label.chip.pick { cursor: pointer; }
+label.chip.pick input { width: 20px; height: 20px; margin: 0; }
+.srchead { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.srchead h3 { margin: 0; flex: 1; font-size: 1.05rem; }
+.srchead button { min-height: 44px; }
+details.srcgroup > summary { font-size: 1.15rem; border-bottom: 1px solid var(--border); }
+details.srcgroup > summary .count { margin-inline-start: 10px; font-size: .85rem; }
+details.srcgroup .srcbody { padding: 4px 0 4px 0; }
+p.cat { margin: 12px 0 2px; color: var(--muted); font-size: .85rem; font-weight: 600; }
+details.src { border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; margin-top: 8px; background: var(--bg); }
+details.src > summary { min-height: 48px; padding: 8px 0; display: block; }
+details.src > summary .he { font-size: 1.1rem; font-weight: 700; }
+details.src .written { display: block; color: var(--muted); font-family: var(--he); font-size: .95rem; }
+details.src .srcpreview { margin: 4px 0 10px; color: var(--muted); }
+details.src .btn { width: 100%; margin-bottom: 12px; }
 pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-height: 40vh; overflow: auto; background: var(--bg); padding: 8px; border-radius: 8px; }
 </style>
 </head>
@@ -155,7 +170,7 @@ pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-h
   </section>
 
   <section id="resultsSection" class="hidden">
-    <h2>3. Citations</h2>
+    <h2 id="resultsTitle">3. Citations</h2>
     <div id="summary" class="hint" style="margin:0 0 10px"></div>
     <details id="markedWrap">
       <summary>Show text with citations marked</summary>
@@ -593,7 +608,7 @@ async function postFindRefs(text) {
   throw lastErr;
 }
 
-async function findRefs(text) {
+async function findRefs(text, onStatus = setStatus) {
   const res = await postFindRefs(text);
   const data = await res.json().catch(() => null);
   const direct = extractBody(data);
@@ -603,10 +618,10 @@ async function findRefs(text) {
     logEvent('shape', { where: 'find-refs', status: res.status, sample: JSON.stringify(data).slice(0, 800) });
     throw new Error('Sefaria replied in an unexpected format. Details are in the failure log.');
   }
-  return pollTask(taskId);
+  return pollTask(taskId, onStatus);
 }
 
-async function pollTask(id) {
+async function pollTask(id, onStatus = setStatus) {
   const deadline = Date.now() + 30000;
   let delay = 600, last = null;
   while (Date.now() < deadline) {
@@ -633,7 +648,7 @@ async function pollTask(id) {
       logEvent('shape', { where: 'async-poll', sample: JSON.stringify(d).slice(0, 800) });
       throw new Error('Sefaria finished, but the reply was in an unexpected format. Details are in the failure log.');
     }
-    setStatus(`Waiting for Sefaria… ${state ? '(' + state.toLowerCase() + ')' : ''}`, { busy: true });
+    onStatus(`Waiting for Sefaria… ${state ? '(' + state.toLowerCase() + ')' : ''}`, { busy: true });
   }
   logEvent('error', { where: 'async-poll', msg: 'timeout', last: JSON.stringify(last).slice(0, 500) });
   throw new Error('Sefaria took more than 30 seconds. Try again, or try a shorter piece of text.');
@@ -685,10 +700,10 @@ const ctx = (text, s, e) => text.slice(Math.max(0, s - 40), Math.min(text.length
 const byStart = (a, b) => a.start - b.start || b.end - a.end;
 const MAX_QUOTE_SEARCHES = 15;
 
-async function runPipeline(text) {
+async function runPipeline(text, { onStatus = setStatus } = {}) {
   // 2. Abbreviation fixes and ד"ה blanking, same length so offsets still match.
   const prep = Cite.prepareForLinker(text);
-  const linker = await findRefs(prep.linkText);
+  const linker = await findRefs(prep.linkText, onStatus);
   const refData = linker.refData || {};
   let items = (linker.results || [])
     .filter((r) => typeof r.startChar === 'number' && typeof r.endChar === 'number')
@@ -703,7 +718,7 @@ async function runPipeline(text) {
   });
 
   // 3. ד"ה: find the comment on that daf whose dibbur hamaschil matches.
-  if (prep.dhs.length) setStatus('Matching ד"ה…', { busy: true });
+  if (prep.dhs.length) onStatus('Matching ד"ה…', { busy: true });
   for (const dh of prep.dhs) {
     const sec = Cite.sectionForDH(text, dh, items.filter((x) => !x.failed));
     if (!sec) { logEvent('dh-unresolved', { words: dh.words.join(' '), context: ctx(text, dh.start, dh.end) }); continue; }
@@ -742,7 +757,7 @@ async function runPipeline(text) {
   // 1. Quotations introduced by a formula: search Sefaria for the quoted words.
   const cands = Cite.findQuoteCandidates(text, items).slice(0, MAX_QUOTE_SEARCHES);
   if (cands.length) {
-    setStatus(`Looking up ${cands.length} quotation${cands.length > 1 ? 's' : ''}…`, { busy: true });
+    onStatus(`Looking up ${cands.length} quotation${cands.length > 1 ? 's' : ''}…`, { busy: true });
     const found = await mapLimit(cands, 3, async (q) => {
       try {
         const filters = Cite.QUOTE_FILTERS[q.cat];
@@ -755,6 +770,7 @@ async function runPipeline(text) {
           return null;
         }
         return { start: q.start, end: q.end, refs: pick.refs.map((x) => x.ref), kind: 'quote', failed: false,
+                 cat: { tanakh: 'Tanakh', mishnah: 'Mishnah', baraita: 'Tosefta' }[q.cat],
                  preview: pick.refs[0].snippet, heRefs: Object.fromEntries(pick.refs.map((x) => [x.ref, x.heRef])) };
       } catch (e) {
         logEvent('error', { where: 'search', msg: String(e) });
@@ -859,38 +875,171 @@ async function identifyPage(text) {
   return v;
 }
 
-const PAGE_LINK_GROUPS = [['Tanakh', 'Verses'], ['Mishnah', 'Mishnah'], ['Tosefta', 'Tosefta'], ['Talmud', 'Talmud'],
-                          ['Midrash', 'Midrash'], ['Halakhah', 'Halakhah']];
-const TEXT_NAMES_HE = {
-  Gemara: 'גמרא', Rashi: 'רש"י', Tosafot: 'תוספות', Rashbam: 'רשב"ם', 'Shulchan Arukh': 'שולחן ערוך', 'Mishnah Berurah': 'משנה ברורה',
-  'Magen Avraham': 'מגן אברהם', 'Turei Zahav': 'ט"ז', 'Siftei Kohen': 'ש"ך', 'Biur Halacha': 'ביאור הלכה', "Sha'ar HaTziyun": 'שער הציון',
-  "Ba'er Hetev": 'באר היטב', Rambam: 'רמב"ם', 'Kesef Mishneh': 'כסף משנה', 'Maggid Mishneh': 'מגיד משנה', Mishnah: 'משנה',
-  Bartenura: 'ברטנורא', Tur: 'טור', 'Beit Yosef': 'בית יוסף', Bach: 'ב"ח',
+// ---------- page view: the texts on the page, and the sources they cite ----------
+// Commentaries normally printed on each kind of page (Sefaria names, as pageOf reports them).
+const PAGE_TEXTS = {
+  talmud: ['Rashi', 'Tosafot', 'Rashbam', 'Rabbeinu Chananel', 'Ran'],
+  sa: ['Magen Avraham', 'Turei Zahav', 'Siftei Kohen', "Ba'er Hetev", "Be'er Heitev", 'Mishnah Berurah', 'Biur Halacha',
+       "Sha'ar HaTziyun", "Be'er HaGolah", 'Pithei Teshuva', 'Pitchei Teshuva', "Me'irat Einayim", 'Beit Shmuel', 'Chelkat Mechokek'],
+  rambam: ['Kesef Mishneh', 'Maggid Mishneh', 'Lechem Mishneh', 'Mishneh LaMelech', "Hasagot HaRa'avad", 'Migdal Oz', 'Hagahot Maimoniyot'],
+  mishnah: ['Bartenura', 'Tosafot Yom Tov', 'Yachin', 'Boaz', 'Rambam'],
+  tur: ['Beit Yosef', 'Bach', 'Darkhei Moshe', 'Drisha', 'Prisha', 'Bedek HaBayit'],
 };
+const MAIN_NAME = { talmud: 'Gemara', sa: 'Shulchan Arukh', rambam: 'Rambam', mishnah: 'Mishnah', tur: 'Tur' };
+const SOURCE_CATS = [['Tanakh', 'Verses'], ['Mishnah', 'Mishnah'], ['Tosefta', 'Tosefta'], ['Talmud', 'Talmud'],
+                     ['Midrash', 'Midrash'], ['Halakhah', 'Halakhah'], ['Other', 'Other']];
+const TEXT_NAMES_HE = {
+  Gemara: 'גמרא', Rashi: 'רש"י', Tosafot: 'תוספות', Rashbam: 'רשב"ם', 'Rabbeinu Chananel': 'רבינו חננאל', Ran: 'ר"ן',
+  'Shulchan Arukh': 'שולחן ערוך', 'Mishnah Berurah': 'משנה ברורה', 'Magen Avraham': 'מגן אברהם', 'Turei Zahav': 'ט"ז',
+  'Siftei Kohen': 'ש"ך', 'Biur Halacha': 'ביאור הלכה', "Sha'ar HaTziyun": 'שער הציון', "Ba'er Hetev": 'באר היטב',
+  "Be'er Heitev": 'באר היטב', "Be'er HaGolah": 'באר הגולה', 'Pithei Teshuva': 'פתחי תשובה', 'Pitchei Teshuva': 'פתחי תשובה',
+  "Me'irat Einayim": 'סמ"ע', 'Beit Shmuel': 'בית שמואל', 'Chelkat Mechokek': 'חלקת מחוקק', Rambam: 'רמב"ם',
+  'Kesef Mishneh': 'כסף משנה', 'Maggid Mishneh': 'מגיד משנה', 'Lechem Mishneh': 'לחם משנה', 'Mishneh LaMelech': 'משנה למלך',
+  "Hasagot HaRa'avad": 'השגות הראב"ד', 'Migdal Oz': 'מגדל עוז', 'Hagahot Maimoniyot': 'הגהות מיימוניות', Mishnah: 'משנה',
+  Bartenura: 'ברטנורא', 'Tosafot Yom Tov': 'תוספות יום טוב', Yachin: 'יכין', Boaz: 'בועז', Tur: 'טור', 'Beit Yosef': 'בית יוסף',
+  Bach: 'ב"ח', 'Darkhei Moshe': 'דרכי משה', Drisha: 'דרישה', Prisha: 'פרישה', 'Bedek HaBayit': 'בדק הבית',
+};
+const LINK_SKIP_TYPES = ['commentary', 'mishnah in talmud', 'targum', 'translation'];
+const GENERATION = 30; // years
 
-/** Sources cited on the identified page, from Sefaria's links for the page and the commentaries matched on it. */
-async function pageLinks(v) {
-  const sections = [...new Set([v.page.main, ...Object.values(v.texts).map((t) => t.section)])];
-  const lists = await mapLimit(sections, 3, async (sec) => {
-    try { const r = await fetch(sefariaBase() + '/api/links/' + encodeURIComponent(sec) + '?with_text=0'); return r.ok ? await r.json() : []; }
-    catch { return []; }
-  });
-  const groups = {}, seen = new Set();
-  for (const l of lists.flat()) {
-    if (!l || ['commentary', 'mishnah in talmud', 'targum', 'translation'].includes(l.type)) continue;
-    const ref = l.sourceRef || l.ref;
-    if (!ref || seen.has(ref) || !PAGE_LINK_GROUPS.some(([c]) => c === l.category)) continue;
-    const p = Cite.pageOf(ref);
-    if (p && p.key === v.page.key) continue;                       // the page's own texts
-    if (l.category === 'Halakhah' && !/^(Mishneh Torah|Shulchan Arukh|Tur)\b/.test(ref)) continue;
-    seen.add(ref);
-    (groups[l.category] = groups[l.category] || []).push({ ref, he: l.sourceHeRef || ref });
+const linksCache = new Map();
+function sefariaLinks(ref) {
+  if (!linksCache.has(ref)) {
+    linksCache.set(ref, fetch(sefariaBase() + '/api/links/' + encodeURIComponent(ref) + '?with_text=0')
+      .then((r) => (r.ok ? r.json() : [])).then((d) => (Array.isArray(d) ? d : [])).catch(() => []));
   }
-  return groups;
+  return linksCache.get(ref);
+}
+const firstYear = (cd) => { const m = /-?\d+/.exec(JSON.stringify(cd ?? '')); return m ? Number(m[0]) : null; };
+const lastYear = (cd) => { const m = JSON.stringify(cd ?? '').match(/-?\d+/g); return m ? Number(m[m.length - 1]) : null; };
+const yearCache = new Map();
+function bookYear(book) {
+  if (!yearCache.has(book)) {
+    yearCache.set(book, fetch(sefariaBase() + '/api/v2/index/' + encodeURIComponent(book))
+      .then((r) => (r.ok ? r.json() : {})).then((d) => firstYear(d.compDate)).catch(() => null));
+  }
+  return yearCache.get(book);
+}
+const flattenLines = (he) => (Array.isArray(he) ? he.flat(Infinity) : [he]).map((x) => stripHtml(x)).filter(Boolean).join('\n');
+
+/** Category for a ref found by the citation finder. */
+function categoryOf(ref, rd) {
+  if (rd && rd.primaryCategory) return SOURCE_CATS.some(([c]) => c === rd.primaryCategory) ? rd.primaryCategory : 'Other';
+  const p = Cite.pageOf(ref);
+  if (p) return { talmud: 'Talmud', mishnah: 'Mishnah', sa: 'Halakhah', tur: 'Halakhah', rambam: 'Halakhah' }[p.kind] || 'Other';
+  return 'Other';
+}
+
+/** The texts printed on the page: the main text, then the standard commentaries Sefaria has for it. */
+async function pageTexts(v) {
+  const mainName = MAIN_NAME[v.page.kind] || 'Main text';
+  const hits = (name) => (v.texts[name] ? v.texts[name].refs.length : 0);
+  const list = [{ name: mainName, section: v.page.main, hits: hits(mainName), main: true }];
+  const allow = PAGE_TEXTS[v.page.kind] || [];
+  const found = new Map();
+  for (const l of await sefariaLinks(v.page.main)) {
+    if (l.type !== 'commentary') continue;
+    const p = Cite.pageOf(l.sourceRef || l.ref);
+    if (p && p.key === v.page.key && p.section !== v.page.main && allow.includes(p.text)) found.set(p.text, p.section);
+  }
+  for (const [name, t] of Object.entries(v.texts)) {          // recognised in the text but not linked
+    if (t.refs.length >= 2 && t.section !== v.page.main && !found.has(name)) found.set(name, t.section);
+  }
+  const order = (n) => { const i = allow.indexOf(n); return i < 0 ? 99 : i; };
+  [...found].sort((a, b) => order(a[0]) - order(b[0]))
+    .forEach(([name, section]) => list.push({ name, section, hits: hits(name), main: false }));
+  // Tick what was recognised in the photographed text; always the main text.
+  list.forEach((t) => { t.checked = t.main || t.hits >= 2; });
+  return list;
+}
+
+/** Sources a text on the page cites: Sefaria's links (earlier works only), plus citations found in its text. */
+async function textSources(v, t) {
+  const [links, year] = await Promise.all([sefariaLinks(t.section), bookYear(Cite.bookOf(t.section))]);
+  const out = new Map();
+  const add = (ref, cat, he, extra = {}) => {
+    if (!ref) return;
+    const p = Cite.pageOf(ref);
+    if (p && p.key === v.page.key) return;                      // the page's own texts
+    const cur = out.get(ref);
+    if (cur) { for (const k of ['written', 'preview', 'label']) if (extra[k] && !cur[k]) cur[k] = extra[k]; return; }
+    out.set(ref, Object.assign({ ref, cat, he: he || ref }, extra));
+  };
+  for (const l of links) {
+    if (LINK_SKIP_TYPES.includes(l.type)) continue;
+    const ref = l.sourceRef || l.ref, cat = l.category;
+    if (['Tanakh', 'Mishnah', 'Tosefta', 'Midrash', 'Talmud'].includes(cat)) add(ref, cat, l.sourceHeRef);
+    else if (cat === 'Halakhah') {
+      if (t.main && v.page.kind === 'talmud') {
+        if (/ein mishpat/i.test(l.type || '')) add(ref, cat, l.sourceHeRef, { label: 'עין משפט' });
+      } else {
+        // Sefaria also links related later or contemporary works: keep ones at least a generation earlier.
+        // Compare the end of the cited work's dates with the start of this text's.
+        const oy = lastYear(l.compDate);
+        if (oy != null && year != null && oy <= year - GENERATION) add(ref, cat, l.sourceHeRef);
+      }
+    }
+  }
+  if (!t.main) {
+    // Sefaria links commentaries sparsely: also run the citation finder on the commentary's own text.
+    const tx = await sefariaText(t.section);
+    const clean = tx ? flattenLines(tx.he) : '';
+    if (clean) {
+      try {
+        const { items, refData } = await runPipeline(clean, { onStatus: () => {} });
+        for (const x of items) {
+          if (x.failed || x.kind === 'pointer' || !x.refs.length) continue;
+          const r = x.refs[0], rd = refData[r];
+          add(r, x.cat || categoryOf(r, rd), (rd && rd.heRef) || (x.heRefs && x.heRefs[r]), {
+            written: clean.slice(x.start, x.end), preview: x.preview || (rd ? flatten(rd.he) : ''),
+          });
+        }
+      } catch (e) {
+        logEvent('error', { where: 'page-sources', section: t.section, msg: String(e) });
+      }
+    }
+  }
+  return [...out.values()];
+}
+
+let pageState = null;
+
+function srcItem(x) {
+  return `<details class="src" data-ref="${esc(x.ref)}">
+      <summary><span class="he" dir="rtl" lang="he">${esc(x.he)}</span>${x.label ? ` <small class="hint">${esc(x.label)}</small>` : ''}
+        ${x.written ? `<span class="written" dir="rtl" lang="he">${esc(truncate(x.written, 80))}</span>` : ''}</summary>
+      <p class="srcpreview he" dir="rtl" lang="he">${x.preview ? esc(truncate(stripHtml(x.preview), 400)) : ''}</p>
+      <a class="btn primary" href="${esc(sefariaUrl(x.ref))}" target="_blank" rel="noopener">Open in Sefaria ↗</a>
+    </details>`;
+}
+
+async function renderSources() {
+  const state = pageState, list = $('#sourceList');
+  const sel = state.texts.filter((t) => t.checked);
+  if (!sel.length) { list.innerHTML = '<p class="hint">Tick a text above to see the sources it cites.</p>'; return; }
+  list.innerHTML = sel.map((t, i) => `<details class="srcgroup" open data-i="${i}">
+      <summary><span class="he">${esc(TEXT_NAMES_HE[t.name] || t.name)}</span> <small class="hint count">finding sources…</small></summary>
+      <div class="srcbody"><div class="status"><span class="spinner"></span><span>Looking up sources…</span></div></div>
+    </details>`).join('');
+  await Promise.all(sel.map(async (t, i) => {
+    if (!state.sources.has(t.section)) state.sources.set(t.section, textSources(state.v, t));
+    const items = await state.sources.get(t.section);
+    if (pageState !== state) return;                              // a newer page replaced this one
+    const el = list.querySelector(`.srcgroup[data-i="${i}"]`);
+    if (!el) return;
+    el.querySelector('.count').textContent = `${items.length} source${items.length === 1 ? '' : 's'}`;
+    el.querySelector('.srcbody').innerHTML = items.length
+      ? SOURCE_CATS.map(([c, label]) => {
+          const g = items.filter((x) => (x.cat || 'Other') === c);
+          return g.length ? `<p class="cat">${esc(label)} (${g.length})</p>` + g.map(srcItem).join('') : '';
+        }).join('')
+      : '<p class="hint">No sources found for this text.</p>';
+  }));
 }
 
 async function renderPage(v) {
   const sec = $('#pageSection'), body = $('#pageBody');
+  pageState = null;
   // No standard page, or only one stray phrase agreeing: say nothing rather than add noise.
   if (!v || v.status === 'none' || (v.status === 'unclear' && v.votes < 2)) { sec.classList.add('hidden'); return false; }
   sec.classList.remove('hidden');
@@ -903,29 +1052,45 @@ async function renderPage(v) {
     return false;
   }
   body.innerHTML = '<div class="status"><span class="spinner"></span><span>Loading the page from Sefaria…</span></div>';
-  const [heMain, groups] = await Promise.all([heOf(v.page.main), pageLinks(v)]);
-  // A single hit in some other commentary is usually that work quoting the page, not part of it.
-  const texts = Object.entries(v.texts)
-    .filter(([, t]) => t.refs.length >= 2 || t.section === v.page.main)
-    .sort((a, b) => b[1].refs.length - a[1].refs.length);
-  const group = ([cat, label]) => {
-    const list = groups[cat];
-    if (!list || !list.length) return '';
-    const name = cat === 'Halakhah' && v.page.kind === 'talmud' ? 'Halakhah (Ein Mishpat)' : label;
-    return `<details${cat === 'Tanakh' ? ' open' : ''}><summary>${esc(name)} (${list.length})</summary>
-      <div class="chips">${list.map((x) => `<a class="chip" href="${esc(sefariaUrl(x.ref))}" target="_blank" rel="noopener" dir="rtl">${esc(x.he)}</a>`).join('')}</div></details>`;
-  };
-  const sources = PAGE_LINK_GROUPS.map(group).join('');
+  const [heMain, texts] = await Promise.all([heOf(v.page.main), pageTexts(v)]);
+  const state = pageState = { v, texts, sources: new Map() };
   body.innerHTML = `
     <p class="page-title" dir="rtl" lang="he">${v.status === 'likely' ? '<small class="hint" dir="ltr">Probably </small>' : ''}${esc(heMain)}</p>
     <p class="hint" style="margin:2px 0 10px">${esc(v.page.main)} · matched ${v.votes} of ${v.probes} phrases</p>
     <a class="btn primary" style="width:100%" href="${esc(sefariaUrl(v.page.main))}" target="_blank" rel="noopener">Open this page in Sefaria ↗</a>
-    <p class="hint" style="margin:12px 0 0">Texts recognised on the page:</p>
-    <div class="chips">${texts.map(([name, t]) => `<a class="chip" href="${esc(sefariaUrl(t.section))}" target="_blank" rel="noopener">${esc(TEXT_NAMES_HE[name] || name)} <small>${t.refs.length}</small></a>`).join('')}</div>
-    ${sources ? `<p class="hint" style="margin:14px 0 0">Sources cited on this page (from Sefaria):</p>${sources}` : ''}
-    ${v.status === 'likely' && v.runnerUp ? `<p class="hint" style="margin-top:12px">Not this page? Also possible: <a href="${esc(sefariaUrl(v.runnerUp.page.main))}" target="_blank" rel="noopener">${esc(v.runnerUp.page.main)}</a></p>` : ''}`;
+    ${v.status === 'likely' && v.runnerUp ? `<p class="hint">Not this page? Also possible: <a href="${esc(sefariaUrl(v.runnerUp.page.main))}" target="_blank" rel="noopener">${esc(v.runnerUp.page.main)}</a></p>` : ''}
+    <p class="hint" style="margin:14px 0 0">Texts on this page: tick the ones whose sources you want.</p>
+    <div class="chips" id="textPicks">${texts.map((t, i) => `<label class="chip pick"><input type="checkbox" data-i="${i}"${t.checked ? ' checked' : ''}>
+        ${esc(TEXT_NAMES_HE[t.name] || t.name)}${t.hits ? ` <small>${t.hits} matched</small>` : ''}</label>`).join('')}</div>
+    <div class="srchead"><h3>Sources</h3><button id="expandAll" type="button">Expand all</button></div>
+    <div id="sourceList"></div>`;
+  $('#textPicks').addEventListener('change', (e) => {
+    const i = e.target.dataset && e.target.dataset.i;
+    if (i === undefined) return;
+    state.texts[Number(i)].checked = e.target.checked;
+    $('#expandAll').textContent = 'Expand all';
+    renderSources();
+  });
+  $('#expandAll').onclick = () => {
+    const open = $('#expandAll').textContent === 'Expand all';
+    $('#sourceList').querySelectorAll('details').forEach((d) => { d.open = open; });
+    $('#expandAll').textContent = open ? 'Collapse all' : 'Expand all';
+  };
+  renderSources();
   return true;
 }
+
+// Fill a source's preview from Sefaria the first time it is opened ("toggle" does not bubble: capture it).
+$('#pageBody').addEventListener('toggle', async (e) => {
+  const d = e.target;
+  if (!d.classList || !d.classList.contains('src') || !d.open) return;
+  const p = d.querySelector('.srcpreview');
+  if (!p || p.textContent.trim() || p.dataset.loading) return;
+  p.dataset.loading = '1';
+  p.textContent = '…';
+  const t = await sefariaText(d.dataset.ref);
+  p.textContent = t ? truncate(stripHtml(flatten(t.he)), 400) || '(no Hebrew text on Sefaria)' : "(couldn't load the text)";
+}, true);
 
 $('#pasteBtn').onclick = async () => {
   try {
@@ -969,6 +1134,8 @@ $('#linkBtn').onclick = async () => {
     const { ok, bad } = renderResults(text, items, refData, extras);
     setStatus('Loading the page from Sefaria…', { busy: true });
     const pageFound = await renderPage(page);
+    $('#resultsTitle').textContent = pageFound ? 'Also found in your text' : '3. Citations';
+    if (pageFound && !ok.length && !extras.length) $('#resultsSection').classList.add('hidden');
     if (pageFound && bad.length) {
       // Text read straight across a page's columns: unresolved fragments are noise, not missed citations.
       $('#failedWrap').classList.add('hidden');

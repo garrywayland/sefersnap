@@ -233,7 +233,8 @@
     baraita: ['תניא', 'דתניא', 'כדתניא', 'ותניא', 'והתניא', 'ת"ר', 'תנו רבנן', 'תני', 'ותני'],
   };
   const TWO_WORD = { 'תלמוד לומר': 'tanakh', 'תנו רבנן': 'baraita', 'אמר קרא': 'tanakh' };
-  const QUOTE_FILTERS = { tanakh: ['Tanakh'], mishnah: ['Mishnah'], baraita: ['Tosefta', 'Midrash'] };
+  // Baraitot: Tosefta only. Searching Midrash finds later anthologies (Ein Yaakov, Sekhel Tov) quoting the Gemara.
+  const QUOTE_FILTERS = { tanakh: ['Tanakh'], mishnah: ['Mishnah'], baraita: ['Tosefta'] };
   const QUOTE_END = new Set(["וגו'", "וכו'", "כו'", 'וגו', 'וכו']);
   const FORMULA_CAT = {};
   for (const [cat, list] of Object.entries(QUOTE_FORMULAS)) for (const f of list) FORMULA_CAT[f] = cat;

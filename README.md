@@ -21,7 +21,11 @@ Plain HTML/CSS/JS with no build step. Files: `index.html` (everything), `manifes
 
 ## Standard pages: identify, don't transcribe
 
-On a Vilna daf, or a Shulchan Aruch, Mishnah Berurah, Tur, Rambam or Mishnah page, OCR reads straight across the columns and mixes them up. SeferSnap therefore doesn't need a clean transcription for these. It searches Sefaria for about 20 short phrases from the text and votes on which page they come from. Then it shows that page: the texts recognised on it (Gemara, Rashi, Tosafot; Shulchan Aruch, Mishnah Berurah, Biur Halacha; …) and the sources Sefaria links from it (verses, Mishnah, Tosefta, Talmud, Ein Mishpat). Text is the only input, so a Google Lens copy works, however jumbled. A phrase found on two pages (a Mishnah quoted in the Bavli) splits its vote, and a close vote is shown as "Probably …" with the alternative. `node tests/live-identify.js` checks this against live Sefaria (behind a proxy, set `NODE_USE_ENV_PROXY=1`).
+On a Vilna daf, or a Shulchan Aruch, Mishnah Berurah, Tur, Rambam or Mishnah page, OCR reads straight across the columns and mixes them up. SeferSnap therefore doesn't need a clean transcription for these. It searches Sefaria for about 20 short phrases from the text and votes on which page they come from. Then it shows that page in three steps:
+
+1. **The page**, with a link to it on Sefaria.
+2. **The texts on the page** (Gemara, Rashi, Tosafot; Shulchan Aruch, Magen Avraham, Mishnah Berurah, Biur Halacha; …) as checkboxes. The ones recognised in your text start ticked.
+3. **The sources the ticked texts cite**, grouped by text and then by kind (verses, Mishnah, Tosefta, Talmud, Halakhah). Tap a source to read it, or use Expand all. For each text, the sources combine Sefaria's links (earlier works only; for the Gemara also Ein Mishpat) with what the citation finder finds in Sefaria's clean text of that commentary, shown with the words as written. Text is the only input, so a Google Lens copy works, however jumbled. A phrase found on two pages (a Mishnah quoted in the Bavli) splits its vote, and a close vote is shown as "Probably …" with the alternative. `node tests/live-identify.js` checks this against live Sefaria (behind a proxy, set `NODE_USE_ENV_PROXY=1`).
 
 ## Getting text in without an API key
 

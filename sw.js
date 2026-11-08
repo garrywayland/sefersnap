@@ -1,6 +1,6 @@
 // App-shell cache only. API calls (Gemini, Sefaria) are cross-origin and are
 // never intercepted or cached, so keys and responses never touch the cache.
-const CACHE = 'sefersnap-v3';
+const CACHE = 'sefersnap-v4';
 const SHELL = [
   './',
   'index.html',
