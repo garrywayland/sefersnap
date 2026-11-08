@@ -1,0 +1,319 @@
+{
+ "_doc": "Sample for tools/mine_sample.py. Each group: refs (explicit Sefaria refs) and/or walk (title or he, count: that many sections spread evenly over the sections that have text). version applies to explicit refs.",
+ "groups": [
+  {
+   "genre": "Gemara",
+   "group": "Bavli",
+   "version": "Wikisource Talmud Bavli",
+   "refs": [
+    "Berakhot 2a",
+    "Shabbat 21b",
+    "Pesachim 116a",
+    "Megillah 7a",
+    "Yevamot 62b",
+    "Ketubot 17a",
+    "Gittin 2a",
+    "Bava Metzia 59b",
+    "Sanhedrin 37a",
+    "Chullin 105a"
+   ]
+  },
+  {
+   "genre": "Gemara",
+   "group": "Rashi on Shas",
+   "refs": [
+    "Rashi on Berakhot 2a",
+    "Rashi on Shabbat 21b",
+    "Rashi on Pesachim 116a",
+    "Rashi on Megillah 7a",
+    "Rashi on Yevamot 62b",
+    "Rashi on Ketubot 17a",
+    "Rashi on Gittin 2a",
+    "Rashi on Bava Metzia 59b",
+    "Rashi on Sanhedrin 37a",
+    "Rashi on Chullin 105a"
+   ]
+  },
+  {
+   "genre": "Gemara",
+   "group": "Tosafot",
+   "refs": [
+    "Tosafot on Berakhot 2a",
+    "Tosafot on Shabbat 21b",
+    "Tosafot on Pesachim 116a",
+    "Tosafot on Megillah 7a",
+    "Tosafot on Yevamot 62b",
+    "Tosafot on Ketubot 17a",
+    "Tosafot on Gittin 2a",
+    "Tosafot on Bava Metzia 59b",
+    "Tosafot on Sanhedrin 37a",
+    "Tosafot on Chullin 105a"
+   ]
+  },
+  {
+   "genre": "Gemara",
+   "group": "Acharonim on Shas (Maharsha, Penei Yehoshua, Maharshal)",
+   "refs": [
+    "Chidushei Agadot on Berakhot 7a",
+    "Chidushei Halachot on Ketubot 17a",
+    "Penei Yehoshua on Berakhot 2a",
+    "Penei Yehoshua on Ketubot 17a"
+   ],
+   "walk": [
+    {
+     "he": "מהרש\"ל שבת",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "genre": "Rishonim on Shas",
+   "group": "Ritva",
+   "refs": [
+    "Ritva on Berakhot 2a",
+    "Ritva on Megillah 7a",
+    "Ritva on Yevamot 62b",
+    "Ritva on Ketubot 17a",
+    "Ritva on Pesachim 116a",
+    "Ritva on Sukkah 41a",
+    "Ritva on Yoma 85b",
+    "Ritva on Kiddushin 2a",
+    "Ritva on Avodah Zarah 2a",
+    "Ritva on Niddah 2a"
+   ]
+  },
+  {
+   "genre": "Rishonim on Shas",
+   "group": "Ramban (chiddushim)",
+   "walk": [
+    {
+     "title": "Chiddushei Ramban on Bava Metzia",
+     "count": 2
+    },
+    {
+     "title": "Chiddushei Ramban on Shabbat",
+     "count": 2
+    },
+    {
+     "title": "Chiddushei Ramban on Bava Batra",
+     "count": 1
+    },
+    {
+     "title": "Chiddushei Ramban on Makkot",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "genre": "Rishonim on Shas",
+   "group": "Other Rishonim (Rashba, Ran, Meiri, Nimukei Yosef, Rosh, Rif, Mordechai)",
+   "walk": [
+    {
+     "title": "Rashba on Berakhot",
+     "count": 2
+    },
+    {
+     "title": "Ran on Nedarim",
+     "count": 2
+    },
+    {
+     "title": "Meiri on Berakhot",
+     "count": 2
+    },
+    {
+     "title": "Nimukei Yosef on Bava Metzia",
+     "count": 2
+    },
+    {
+     "title": "Rosh on Berakhot",
+     "count": 2
+    },
+    {
+     "title": "Rif Berakhot",
+     "count": 2
+    },
+    {
+     "title": "Mordechai on Bava Batra",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "Rambam, Mishneh Torah",
+   "refs": [
+    "Mishneh Torah, Foundations of the Torah 1",
+    "Mishneh Torah, Repentance 3",
+    "Mishneh Torah, Sabbath 2",
+    "Mishneh Torah, Leavened and Unleavened Bread 2",
+    "Mishneh Torah, Scroll of Esther and Hanukkah 2",
+    "Mishneh Torah, Marriage 1",
+    "Mishneh Torah, Robbery and Lost Property 1",
+    "Mishneh Torah, The Sanhedrin and the Penalties within Their Jurisdiction 2",
+    "Mishneh Torah, Forbidden Foods 9",
+    "Mishneh Torah, Kings and Wars 11"
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "On the Rambam (Kesef Mishneh, Maggid Mishneh)",
+   "refs": [
+    "Kesef Mishneh on Mishneh Torah, Repentance 3",
+    "Kesef Mishneh on Mishneh Torah, Forbidden Foods 9",
+    "Kesef Mishneh on Mishneh Torah, Kings and Wars 11",
+    "Maggid Mishneh on Mishneh Torah, Sabbath 2",
+    "Maggid Mishneh on Mishneh Torah, Marriage 1",
+    "Maggid Mishneh on Mishneh Torah, Robbery and Lost Property 1"
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "Tur and Beit Yosef",
+   "refs": [
+    "Tur, Orach Chayim 1",
+    "Tur, Yoreh Deah 87",
+    "Tur, Even HaEzer 1",
+    "Tur, Choshen Mishpat 1",
+    "Beit Yosef, Orach Chayim 1",
+    "Beit Yosef, Yoreh Deah 87",
+    "Beit Yosef, Choshen Mishpat 1"
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "Shulchan Arukh",
+   "refs": [
+    "Shulchan Arukh, Orach Chayim 1",
+    "Shulchan Arukh, Yoreh De'ah 87",
+    "Shulchan Arukh, Even HaEzer 1",
+    "Shulchan Arukh, Choshen Mishpat 1"
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "Nosei kelim (Magen Avraham, Taz, Shach, Ketzot)",
+   "refs": [
+    "Magen Avraham 1",
+    "Magen Avraham 128",
+    "Magen Avraham 670",
+    "Turei Zahav on Shulchan Arukh, Orach Chayim 1",
+    "Turei Zahav on Shulchan Arukh, Orach Chayim 128",
+    "Turei Zahav on Shulchan Arukh, Orach Chayim 670",
+    "Siftei Kohen on Shulchan Arukh, Yoreh De'ah 87",
+    "Siftei Kohen on Shulchan Arukh, Yoreh De'ah 98",
+    "Siftei Kohen on Shulchan Arukh, Yoreh De'ah 242",
+    "Ketzot HaChoshen on Shulchan Arukh, Choshen Mishpat 28",
+    "Ketzot HaChoshen on Shulchan Arukh, Choshen Mishpat 72",
+    "Ketzot HaChoshen on Shulchan Arukh, Choshen Mishpat 290"
+   ]
+  },
+  {
+   "genre": "Codes",
+   "group": "Later codes (Mishnah Berurah, Aruch HaShulchan, Kitzur, Chinuch)",
+   "refs": [
+    "Mishnah Berurah 1",
+    "Mishnah Berurah 128",
+    "Mishnah Berurah 271",
+    "Mishnah Berurah 670",
+    "Arukh HaShulchan, Orach Chaim 1",
+    "Arukh HaShulchan, Orach Chaim 128",
+    "Arukh HaShulchan, Orach Chaim 670",
+    "Kitzur Shulchan Arukh 1",
+    "Kitzur Shulchan Arukh 139",
+    "Sefer HaChinukh 2",
+    "Sefer HaChinukh 16",
+    "Sefer HaChinukh 430"
+   ]
+  },
+  {
+   "genre": "Responsa",
+   "group": "Rishonim (Rashba, Rosh, Rivash, Maharam)",
+   "walk": [
+    {
+     "he": "שו\"ת הרשב\"א חלק א",
+     "count": 3
+    },
+    {
+     "title": "Teshuvot HaRosh",
+     "count": 3
+    },
+    {
+     "title": "Teshuvot HaRivash",
+     "count": 3
+    },
+    {
+     "title": "Teshuvot Maharam",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "genre": "Responsa",
+   "group": "Acharonim (Noda BiYehuda, Chatam Sofer, R. Akiva Eiger, Rav Pealim)",
+   "walk": [
+    {
+     "title": "Noda BiYehudah I",
+     "count": 3
+    },
+    {
+     "title": "Responsa Chatam Sofer",
+     "count": 3
+    },
+    {
+     "he": "תשובות רבי עקיבא איגר",
+     "count": 3
+    },
+    {
+     "title": "Responsa Rav Pealim",
+     "count": 2
+    }
+   ]
+  },
+  {
+   "genre": "Chumash commentaries",
+   "group": "Rashi, Ibn Ezra, Ramban, Sforno, Or HaChaim, Kli Yakar",
+   "refs": [
+    "Rashi on Genesis 1",
+    "Rashi on Genesis 18",
+    "Rashi on Exodus 12",
+    "Rashi on Leviticus 18",
+    "Ibn Ezra on Genesis 1",
+    "Ibn Ezra on Genesis 18",
+    "Ibn Ezra on Exodus 12",
+    "Ibn Ezra on Leviticus 18",
+    "Ramban on Genesis 1",
+    "Ramban on Genesis 18",
+    "Ramban on Genesis 32",
+    "Ramban on Leviticus 18",
+    "Sforno on Genesis 1",
+    "Sforno on Genesis 32",
+    "Sforno on Exodus 12",
+    "Or HaChaim on Genesis 1",
+    "Or HaChaim on Genesis 18",
+    "Or HaChaim on Exodus 12",
+    "Kli Yakar on Genesis 1",
+    "Kli Yakar on Genesis 32",
+    "Kli Yakar on Exodus 12"
+   ]
+  },
+  {
+   "genre": "Midrash, lomdus, mussar",
+   "group": "Yalkut Shimoni, Shev Shmateta, Mesillat Yesharim",
+   "refs": [
+    "Yalkut Shimoni on Torah 1",
+    "Yalkut Shimoni on Torah 82",
+    "Yalkut Shimoni on Torah 187"
+   ],
+   "walk": [
+    {
+     "title": "Shev Shmateta",
+     "count": 2
+    },
+    {
+     "title": "Mesillat Yesharim",
+     "count": 2
+    }
+   ]
+  }
+ ]
+}

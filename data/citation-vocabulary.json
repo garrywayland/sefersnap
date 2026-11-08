@@ -1,0 +1,1695 @@
+{
+ "_doc": "Curated citation vocabulary. \"sample\" = times the term appears on the sample pages (see docs/citation-formulas.md); 0 means not seen in this small sample but standard usage.",
+ "groups": {
+  "quote_tanakh": {
+   "doc": "Introduce a quoted verse. Search the following words in Tanakh.",
+   "items": [
+    {
+     "term": "שנאמר",
+     "sample": 298,
+     "genres": {
+      "Codes": 100,
+      "Chumash commentaries": 91,
+      "Midrash, lomdus, mussar": 72,
+      "Rishonim on Shas": 16,
+      "Gemara": 10,
+      "Responsa": 9
+     }
+    },
+    {
+     "term": "שנא'",
+     "sample": 9,
+     "genres": {
+      "Codes": 4,
+      "Gemara": 3,
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "שנ'",
+     "sample": 0
+    },
+    {
+     "term": "דכתיב",
+     "sample": 182,
+     "genres": {
+      "Codes": 69,
+      "Chumash commentaries": 35,
+      "Rishonim on Shas": 29,
+      "Gemara": 25,
+      "Midrash, lomdus, mussar": 24
+     }
+    },
+    {
+     "term": "דכתי'",
+     "sample": 4,
+     "genres": {
+      "Codes": 4
+     }
+    },
+    {
+     "term": "דכת'",
+     "sample": 3,
+     "genres": {
+      "Codes": 3
+     }
+    },
+    {
+     "term": "כדכתיב",
+     "sample": 39,
+     "genres": {
+      "Codes": 16,
+      "Chumash commentaries": 14,
+      "Rishonim on Shas": 6,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "כדכתי'",
+     "sample": 0
+    },
+    {
+     "term": "וכתיב",
+     "sample": 45,
+     "genres": {
+      "Chumash commentaries": 14,
+      "Midrash, lomdus, mussar": 10,
+      "Rishonim on Shas": 9,
+      "Codes": 8,
+      "Gemara": 4
+     }
+    },
+    {
+     "term": "וכתי'",
+     "sample": 0
+    },
+    {
+     "term": "כתיב",
+     "sample": 82,
+     "genres": {
+      "Midrash, lomdus, mussar": 21,
+      "Chumash commentaries": 19,
+      "Codes": 18,
+      "Rishonim on Shas": 12,
+      "Gemara": 8,
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "והכתיב",
+     "sample": 4,
+     "genres": {
+      "Midrash, lomdus, mussar": 4
+     }
+    },
+    {
+     "term": "הוא דכתיב",
+     "sample": 14,
+     "genres": {
+      "Midrash, lomdus, mussar": 9,
+      "Chumash commentaries": 5
+     }
+    },
+    {
+     "term": "מאי דכתיב",
+     "sample": 2,
+     "genres": {
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "מאי קרא",
+     "sample": 0
+    },
+    {
+     "term": "אמר קרא",
+     "sample": 4,
+     "genres": {
+      "Rishonim on Shas": 4
+     }
+    },
+    {
+     "term": "ת\"ל",
+     "sample": 31,
+     "genres": {
+      "Chumash commentaries": 25,
+      "Codes": 6
+     }
+    },
+    {
+     "term": "תלמוד לומר",
+     "sample": 18,
+     "genres": {
+      "Chumash commentaries": 12,
+      "Midrash, lomdus, mussar": 6
+     }
+    },
+    {
+     "term": "ונאמר",
+     "sample": 14,
+     "genres": {
+      "Codes": 9,
+      "Chumash commentaries": 5
+     }
+    },
+    {
+     "term": "ואומר",
+     "sample": 67,
+     "genres": {
+      "Rishonim on Shas": 19,
+      "Chumash commentaries": 15,
+      "Codes": 14,
+      "Midrash, lomdus, mussar": 13,
+      "Gemara": 3,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "הוא אומר",
+     "sample": 30,
+     "genres": {
+      "Chumash commentaries": 14,
+      "Codes": 9,
+      "Midrash, lomdus, mussar": 5,
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "כענין שנאמר",
+     "sample": 10,
+     "genres": {
+      "Codes": 5,
+      "Chumash commentaries": 5
+     }
+    },
+    {
+     "term": "כמו שנאמר",
+     "sample": 17,
+     "genres": {
+      "Codes": 9,
+      "Chumash commentaries": 8
+     }
+    },
+    {
+     "term": "שאמר הכתוב",
+     "sample": 29,
+     "genres": {
+      "Chumash commentaries": 26,
+      "Codes": 3
+     }
+    },
+    {
+     "term": "שכתוב",
+     "sample": 89,
+     "genres": {
+      "Chumash commentaries": 42,
+      "Gemara": 14,
+      "Codes": 11,
+      "Responsa": 10,
+      "Rishonim on Shas": 9,
+      "Midrash, lomdus, mussar": 3
+     }
+    },
+    {
+     "term": "ככתוב",
+     "sample": 5,
+     "genres": {
+      "Chumash commentaries": 5
+     }
+    },
+    {
+     "term": "כאמרו",
+     "sample": 37,
+     "genres": {
+      "Chumash commentaries": 37
+     }
+    },
+    {
+     "term": "מהכא",
+     "sample": 6,
+     "genres": {
+      "Gemara": 6
+     }
+    },
+    {
+     "term": "מנין",
+     "sample": 42,
+     "genres": {
+      "Midrash, lomdus, mussar": 19,
+      "Codes": 9,
+      "Chumash commentaries": 7,
+      "Rishonim on Shas": 5,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "ועליהם נאמר",
+     "sample": 2,
+     "genres": {
+      "Codes": 2
+     }
+    },
+    {
+     "term": "קרא",
+     "sample": 83,
+     "genres": {
+      "Codes": 25,
+      "Chumash commentaries": 19,
+      "Gemara": 17,
+      "Rishonim on Shas": 15,
+      "Midrash, lomdus, mussar": 4,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "כתוב",
+     "sample": 81,
+     "genres": {
+      "Chumash commentaries": 49,
+      "Codes": 18,
+      "Rishonim on Shas": 7,
+      "Responsa": 7
+     }
+    }
+   ]
+  },
+  "quote_mishnah": {
+   "doc": "Introduce a quoted Mishnah. Search the following words in Mishnah.",
+   "items": [
+    {
+     "term": "תנן",
+     "sample": 32,
+     "genres": {
+      "Codes": 20,
+      "Rishonim on Shas": 12
+     }
+    },
+    {
+     "term": "דתנן",
+     "sample": 36,
+     "genres": {
+      "Rishonim on Shas": 18,
+      "Codes": 13,
+      "Responsa": 3,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "כדתנן",
+     "sample": 10,
+     "genres": {
+      "Codes": 4,
+      "Rishonim on Shas": 3,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "ותנן",
+     "sample": 4,
+     "genres": {
+      "Codes": 4
+     }
+    },
+    {
+     "term": "והתנן",
+     "sample": 0
+    },
+    {
+     "term": "תנן התם",
+     "sample": 3,
+     "genres": {
+      "Codes": 3
+     }
+    },
+    {
+     "term": "תנינא",
+     "sample": 5,
+     "genres": {
+      "Rishonim on Shas": 3,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "מתני'",
+     "sample": 48,
+     "genres": {
+      "Rishonim on Shas": 31,
+      "Gemara": 12,
+      "Responsa": 3,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "במתני'",
+     "sample": 8,
+     "genres": {
+      "Rishonim on Shas": 6,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "דמתני'",
+     "sample": 24,
+     "genres": {
+      "Gemara": 11,
+      "Rishonim on Shas": 7,
+      "Codes": 4,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "במשנה",
+     "sample": 29,
+     "genres": {
+      "Codes": 22,
+      "Chumash commentaries": 4,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "שנינו",
+     "sample": 8,
+     "genres": {
+      "Codes": 6,
+      "Rishonim on Shas": 2
+     }
+    }
+   ]
+  },
+  "quote_baraita": {
+   "doc": "Introduce a baraita. Search Tosefta, Sifra, Sifrei, Mekhilta, and the Bavli itself.",
+   "items": [
+    {
+     "term": "תניא",
+     "sample": 25,
+     "genres": {
+      "Rishonim on Shas": 16,
+      "Gemara": 7,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "דתניא",
+     "sample": 19,
+     "genres": {
+      "Rishonim on Shas": 15,
+      "Codes": 4
+     }
+    },
+    {
+     "term": "כדתניא",
+     "sample": 4,
+     "genres": {
+      "Rishonim on Shas": 4
+     }
+    },
+    {
+     "term": "ותניא",
+     "sample": 11,
+     "genres": {
+      "Rishonim on Shas": 9,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "והתניא",
+     "sample": 6,
+     "genres": {
+      "Rishonim on Shas": 6
+     }
+    },
+    {
+     "term": "ת\"ר",
+     "sample": 28,
+     "genres": {
+      "Rishonim on Shas": 23,
+      "Gemara": 5
+     }
+    },
+    {
+     "term": "תנו רבנן",
+     "sample": 5,
+     "genres": {
+      "Rishonim on Shas": 3,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "תני",
+     "sample": 38,
+     "genres": {
+      "Rishonim on Shas": 21,
+      "Midrash, lomdus, mussar": 9,
+      "Codes": 3,
+      "Responsa": 3,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "ותני",
+     "sample": 9,
+     "genres": {
+      "Rishonim on Shas": 5,
+      "Gemara": 4
+     }
+    },
+    {
+     "term": "ת\"ש",
+     "sample": 2,
+     "genres": {
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "תא שמע",
+     "sample": 0
+    },
+    {
+     "term": "במתניתא",
+     "sample": 2,
+     "genres": {
+      "Rishonim on Shas": 2
+     }
+    }
+   ]
+  },
+  "quote_gemara": {
+   "doc": "Later authors pointing to the Gemara, often with a quote or a location.",
+   "items": [
+    {
+     "term": "כדאמרינן",
+     "sample": 41,
+     "genres": {
+      "Rishonim on Shas": 12,
+      "Gemara": 11,
+      "Codes": 11,
+      "Responsa": 7
+     }
+    },
+    {
+     "term": "דאמרינן",
+     "sample": 83,
+     "genres": {
+      "Rishonim on Shas": 39,
+      "Codes": 29,
+      "Responsa": 15
+     }
+    },
+    {
+     "term": "כדאמרי'",
+     "sample": 18,
+     "genres": {
+      "Rishonim on Shas": 15,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "דאמרי'",
+     "sample": 56,
+     "genres": {
+      "Rishonim on Shas": 39,
+      "Codes": 15,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "אמרינן",
+     "sample": 141,
+     "genres": {
+      "Codes": 62,
+      "Rishonim on Shas": 59,
+      "Responsa": 18,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "בגמ'",
+     "sample": 60,
+     "genres": {
+      "Rishonim on Shas": 29,
+      "Codes": 17,
+      "Gemara": 7,
+      "Responsa": 7
+     }
+    },
+    {
+     "term": "בגמרא",
+     "sample": 76,
+     "genres": {
+      "Codes": 38,
+      "Rishonim on Shas": 15,
+      "Responsa": 11,
+      "Chumash commentaries": 7,
+      "Gemara": 5
+     }
+    },
+    {
+     "term": "איתא",
+     "sample": 32,
+     "genres": {
+      "Codes": 18,
+      "Rishonim on Shas": 11,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "כדאיתא",
+     "sample": 60,
+     "genres": {
+      "Codes": 24,
+      "Rishonim on Shas": 18,
+      "Responsa": 11,
+      "Gemara": 5,
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "דאיתא",
+     "sample": 11,
+     "genres": {
+      "Codes": 7,
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "התם",
+     "sample": 154,
+     "genres": {
+      "Rishonim on Shas": 75,
+      "Codes": 43,
+      "Gemara": 16,
+      "Responsa": 13,
+      "Midrash, lomdus, mussar": 5,
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "גבי",
+     "sample": 190,
+     "genres": {
+      "Codes": 78,
+      "Rishonim on Shas": 71,
+      "Responsa": 24,
+      "Gemara": 12,
+      "Midrash, lomdus, mussar": 5
+     }
+    },
+    {
+     "term": "איתמר",
+     "sample": 3,
+     "genres": {
+      "Rishonim on Shas": 3
+     }
+    },
+    {
+     "term": "אמר מר",
+     "sample": 5,
+     "genres": {
+      "Rishonim on Shas": 3,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "ירושלמי",
+     "sample": 16,
+     "genres": {
+      "Rishonim on Shas": 10,
+      "Codes": 4,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "בירושלמי",
+     "sample": 64,
+     "genres": {
+      "Rishonim on Shas": 36,
+      "Codes": 13,
+      "Gemara": 9,
+      "Responsa": 4,
+      "Chumash commentaries": 2
+     }
+    }
+   ]
+  },
+  "quote_named_author": {
+   "doc": "Verbatim or paraphrased citation of a named author. וז\"ל ... עכ\"ל brackets an exact quote.",
+   "items": [
+    {
+     "term": "וז\"ל",
+     "sample": 89,
+     "genres": {
+      "Codes": 52,
+      "Responsa": 23,
+      "Rishonim on Shas": 8,
+      "Midrash, lomdus, mussar": 6
+     }
+    },
+    {
+     "term": "ז\"ל",
+     "sample": 469,
+     "genres": {
+      "Rishonim on Shas": 172,
+      "Codes": 153,
+      "Responsa": 99,
+      "Gemara": 21,
+      "Chumash commentaries": 21,
+      "Midrash, lomdus, mussar": 3
+     }
+    },
+    {
+     "term": "עכ\"ל",
+     "sample": 153,
+     "genres": {
+      "Codes": 105,
+      "Responsa": 25,
+      "Gemara": 10,
+      "Rishonim on Shas": 9,
+      "Midrash, lomdus, mussar": 4
+     }
+    },
+    {
+     "term": "ע\"כ",
+     "sample": 109,
+     "genres": {
+      "Codes": 75,
+      "Rishonim on Shas": 13,
+      "Responsa": 10,
+      "Gemara": 4,
+      "Chumash commentaries": 4,
+      "Midrash, lomdus, mussar": 3
+     }
+    },
+    {
+     "term": "כתב",
+     "sample": 422,
+     "genres": {
+      "Codes": 261,
+      "Rishonim on Shas": 90,
+      "Responsa": 33,
+      "Chumash commentaries": 21,
+      "Gemara": 12,
+      "Midrash, lomdus, mussar": 5
+     }
+    },
+    {
+     "term": "וכתב",
+     "sample": 117,
+     "genres": {
+      "Codes": 84,
+      "Rishonim on Shas": 14,
+      "Responsa": 8,
+      "Chumash commentaries": 6,
+      "Midrash, lomdus, mussar": 3,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "וכ\"כ",
+     "sample": 89,
+     "genres": {
+      "Codes": 84,
+      "Rishonim on Shas": 3,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "כמ\"ש",
+     "sample": 86,
+     "genres": {
+      "Codes": 74,
+      "Responsa": 6,
+      "Gemara": 3,
+      "Rishonim on Shas": 3
+     }
+    },
+    {
+     "term": "וכמ\"ש",
+     "sample": 121,
+     "genres": {
+      "Codes": 105,
+      "Responsa": 14,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "ומ\"ש",
+     "sample": 59,
+     "genres": {
+      "Codes": 51,
+      "Responsa": 6,
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "מ\"ש",
+     "sample": 83,
+     "genres": {
+      "Codes": 63,
+      "Responsa": 17,
+      "Rishonim on Shas": 3
+     }
+    },
+    {
+     "term": "כמו שכתב",
+     "sample": 14,
+     "genres": {
+      "Codes": 8,
+      "Responsa": 6
+     }
+    },
+    {
+     "term": "פירש\"י",
+     "sample": 27,
+     "genres": {
+      "Rishonim on Shas": 13,
+      "Codes": 12,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "פי'",
+     "sample": 168,
+     "genres": {
+      "Codes": 81,
+      "Rishonim on Shas": 59,
+      "Gemara": 13,
+      "Responsa": 8,
+      "Chumash commentaries": 7
+     }
+    },
+    {
+     "term": "כתבו",
+     "sample": 75,
+     "genres": {
+      "Codes": 52,
+      "Rishonim on Shas": 10,
+      "Responsa": 9,
+      "Gemara": 4
+     }
+    },
+    {
+     "term": "וכתבו",
+     "sample": 37,
+     "genres": {
+      "Codes": 29,
+      "Rishonim on Shas": 5,
+      "Responsa": 3
+     }
+    }
+   ]
+  },
+  "pointer": {
+   "doc": "See / ibid / above / below. Resolve against the previous citation on the page.",
+   "items": [
+    {
+     "term": "ע\"ש",
+     "sample": 141,
+     "genres": {
+      "Codes": 103,
+      "Responsa": 20,
+      "Midrash, lomdus, mussar": 10,
+      "Gemara": 8
+     }
+    },
+    {
+     "term": "עיי\"ש",
+     "sample": 4,
+     "genres": {
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "שם",
+     "sample": 920,
+     "genres": {
+      "Codes": 568,
+      "Chumash commentaries": 166,
+      "Responsa": 87,
+      "Rishonim on Shas": 48,
+      "Gemara": 28,
+      "Midrash, lomdus, mussar": 23
+     }
+    },
+    {
+     "term": "הנ\"ל",
+     "sample": 36,
+     "genres": {
+      "Responsa": 24,
+      "Codes": 12
+     }
+    },
+    {
+     "term": "הנז'",
+     "sample": 23,
+     "genres": {
+      "Responsa": 16,
+      "Codes": 7
+     }
+    },
+    {
+     "term": "כנ\"ל",
+     "sample": 28,
+     "genres": {
+      "Codes": 20,
+      "Gemara": 6,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "וכנ\"ל",
+     "sample": 18,
+     "genres": {
+      "Codes": 15,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "עי'",
+     "sample": 9,
+     "genres": {
+      "Rishonim on Shas": 9
+     }
+    },
+    {
+     "term": "ועי'",
+     "sample": 5,
+     "genres": {
+      "Responsa": 3,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "וע'",
+     "sample": 12,
+     "genres": {
+      "Codes": 12
+     }
+    },
+    {
+     "term": "עיין",
+     "sample": 156,
+     "genres": {
+      "Codes": 142,
+      "Rishonim on Shas": 6,
+      "Responsa": 6,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "ועיין",
+     "sample": 111,
+     "genres": {
+      "Codes": 97,
+      "Responsa": 9,
+      "Gemara": 5
+     }
+    },
+    {
+     "term": "לקמן",
+     "sample": 98,
+     "genres": {
+      "Codes": 41,
+      "Rishonim on Shas": 38,
+      "Gemara": 17,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "לעיל",
+     "sample": 112,
+     "genres": {
+      "Codes": 53,
+      "Rishonim on Shas": 39,
+      "Responsa": 11,
+      "Gemara": 9
+     }
+    },
+    {
+     "term": "בסמוך",
+     "sample": 30,
+     "genres": {
+      "Gemara": 10,
+      "Rishonim on Shas": 9,
+      "Chumash commentaries": 7,
+      "Codes": 4
+     }
+    },
+    {
+     "term": "כדלקמן",
+     "sample": 8,
+     "genres": {
+      "Codes": 8
+     }
+    },
+    {
+     "term": "כדלעיל",
+     "sample": 12,
+     "genres": {
+      "Codes": 10,
+      "Rishonim on Shas": 2
+     }
+    }
+   ]
+  },
+  "location": {
+   "doc": "Location markers that follow a book or author name.",
+   "items": [
+    {
+     "term": "סי'",
+     "sample": 126,
+     "genres": {
+      "Codes": 103,
+      "Responsa": 21,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "סימן",
+     "sample": 154,
+     "genres": {
+      "Codes": 131,
+      "Rishonim on Shas": 8,
+      "Chumash commentaries": 8,
+      "Responsa": 5,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "בסי'",
+     "sample": 37,
+     "genres": {
+      "Codes": 31,
+      "Responsa": 6
+     }
+    },
+    {
+     "term": "ס\"ק",
+     "sample": 21,
+     "genres": {
+      "Codes": 14,
+      "Responsa": 7
+     }
+    },
+    {
+     "term": "סק\"א",
+     "sample": 3,
+     "genres": {
+      "Codes": 3
+     }
+    },
+    {
+     "term": "סק\"ב",
+     "sample": 3,
+     "genres": {
+      "Codes": 3
+     }
+    },
+    {
+     "term": "סק\"ז",
+     "sample": 0
+    },
+    {
+     "term": "ס\"ס",
+     "sample": 53,
+     "genres": {
+      "Responsa": 34,
+      "Codes": 19
+     }
+    },
+    {
+     "term": "סעי'",
+     "sample": 2,
+     "genres": {
+      "Codes": 2
+     }
+    },
+    {
+     "term": "סעיף",
+     "sample": 40,
+     "genres": {
+      "Codes": 36,
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "ס\"א",
+     "sample": 8,
+     "genres": {
+      "Codes": 8
+     }
+    },
+    {
+     "term": "ס'",
+     "sample": 52,
+     "genres": {
+      "Codes": 39,
+      "Responsa": 13
+     }
+    },
+    {
+     "term": "ד\"ה",
+     "sample": 23,
+     "genres": {
+      "Codes": 14,
+      "Responsa": 7,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "בד\"ה",
+     "sample": 14,
+     "genres": {
+      "Gemara": 8,
+      "Responsa": 4,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "דף",
+     "sample": 89,
+     "genres": {
+      "Codes": 59,
+      "Responsa": 22,
+      "Gemara": 4,
+      "Chumash commentaries": 2,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "ע\"א",
+     "sample": 38,
+     "genres": {
+      "Codes": 24,
+      "Responsa": 14
+     }
+    },
+    {
+     "term": "ע\"ב",
+     "sample": 20,
+     "genres": {
+      "Responsa": 12,
+      "Codes": 8
+     }
+    },
+    {
+     "term": "פ'",
+     "sample": 171,
+     "genres": {
+      "Codes": 123,
+      "Rishonim on Shas": 41,
+      "Responsa": 4,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "פרק",
+     "sample": 182,
+     "genres": {
+      "Codes": 102,
+      "Rishonim on Shas": 60,
+      "Responsa": 10,
+      "Gemara": 8,
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "פ\"ק",
+     "sample": 23,
+     "genres": {
+      "Codes": 17,
+      "Rishonim on Shas": 3,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "בפ\"ק",
+     "sample": 37,
+     "genres": {
+      "Rishonim on Shas": 15,
+      "Codes": 10,
+      "Gemara": 6,
+      "Responsa": 6
+     }
+    },
+    {
+     "term": "בפ'",
+     "sample": 95,
+     "genres": {
+      "Codes": 64,
+      "Rishonim on Shas": 22,
+      "Gemara": 5,
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "הל'",
+     "sample": 2,
+     "genres": {
+      "Codes": 2
+     }
+    },
+    {
+     "term": "מהל'",
+     "sample": 24,
+     "genres": {
+      "Codes": 14,
+      "Responsa": 7,
+      "Rishonim on Shas": 3
+     }
+    },
+    {
+     "term": "ה\"א",
+     "sample": 10,
+     "genres": {
+      "Chumash commentaries": 8,
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "ה\"ב",
+     "sample": 0
+    },
+    {
+     "term": "ה\"ג",
+     "sample": 12,
+     "genres": {
+      "Rishonim on Shas": 9,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "כלל",
+     "sample": 276,
+     "genres": {
+      "Codes": 142,
+      "Rishonim on Shas": 45,
+      "Chumash commentaries": 42,
+      "Responsa": 37,
+      "Gemara": 7,
+      "Midrash, lomdus, mussar": 3
+     }
+    },
+    {
+     "term": "אות",
+     "sample": 25,
+     "genres": {
+      "Chumash commentaries": 10,
+      "Codes": 8,
+      "Responsa": 5,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "עמוד",
+     "sample": 24,
+     "genres": {
+      "Gemara": 10,
+      "Rishonim on Shas": 7,
+      "Chumash commentaries": 5,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "בתשו'",
+     "sample": 6,
+     "genres": {
+      "Codes": 6
+     }
+    },
+    {
+     "term": "תשובה",
+     "sample": 72,
+     "genres": {
+      "Responsa": 26,
+      "Codes": 23,
+      "Chumash commentaries": 20,
+      "Rishonim on Shas": 3
+     }
+    }
+   ]
+  },
+  "author_or_book": {
+   "doc": "Common author and book abbreviations (Hebrew name, Sefaria title).",
+   "items": [
+    {
+     "term": "רש\"י",
+     "sample": 184,
+     "meaning": "Rashi",
+     "genres": {
+      "Codes": 64,
+      "Chumash commentaries": 53,
+      "Responsa": 26,
+      "Gemara": 22,
+      "Rishonim on Shas": 19
+     }
+    },
+    {
+     "term": "פירש\"י",
+     "sample": 27,
+     "meaning": "Rashi",
+     "genres": {
+      "Rishonim on Shas": 13,
+      "Codes": 12,
+      "Gemara": 2
+     }
+    },
+    {
+     "term": "ר\"ת",
+     "sample": 63,
+     "meaning": "Rabbeinu Tam (Tosafot)",
+     "genres": {
+      "Gemara": 18,
+      "Rishonim on Shas": 17,
+      "Codes": 16,
+      "Responsa": 12
+     }
+    },
+    {
+     "term": "ר\"י",
+     "sample": 49,
+     "meaning": "Ri (Tosafot)",
+     "genres": {
+      "Rishonim on Shas": 18,
+      "Gemara": 14,
+      "Codes": 12,
+      "Responsa": 5
+     }
+    },
+    {
+     "term": "תוס'",
+     "sample": 21,
+     "meaning": "Tosafot",
+     "genres": {
+      "Responsa": 13,
+      "Gemara": 3,
+      "Midrash, lomdus, mussar": 3,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "התוס'",
+     "sample": 61,
+     "meaning": "Tosafot",
+     "genres": {
+      "Codes": 33,
+      "Gemara": 15,
+      "Responsa": 11,
+      "Rishonim on Shas": 2
+     }
+    },
+    {
+     "term": "הרמב\"ם",
+     "sample": 173,
+     "meaning": "Mishneh Torah",
+     "genres": {
+      "Codes": 120,
+      "Responsa": 44,
+      "Rishonim on Shas": 9
+     }
+    },
+    {
+     "term": "הרמב\"ן",
+     "sample": 33,
+     "meaning": "Ramban",
+     "genres": {
+      "Codes": 21,
+      "Rishonim on Shas": 7,
+      "Responsa": 5
+     }
+    },
+    {
+     "term": "הרא\"ש",
+     "sample": 55,
+     "meaning": "Rosh",
+     "genres": {
+      "Codes": 41,
+      "Responsa": 10,
+      "Gemara": 4
+     }
+    },
+    {
+     "term": "הרשב\"א",
+     "sample": 110,
+     "meaning": "Rashba",
+     "genres": {
+      "Codes": 71,
+      "Responsa": 32,
+      "Rishonim on Shas": 4,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "הר\"ן",
+     "sample": 54,
+     "meaning": "Ran",
+     "genres": {
+      "Codes": 45,
+      "Responsa": 7,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "הריטב\"א",
+     "sample": 4,
+     "meaning": "Ritva",
+     "genres": {
+      "Codes": 4
+     }
+    },
+    {
+     "term": "הרי\"ף",
+     "sample": 14,
+     "meaning": "Rif",
+     "genres": {
+      "Codes": 14
+     }
+    },
+    {
+     "term": "הטור",
+     "sample": 58,
+     "meaning": "Tur",
+     "genres": {
+      "Codes": 43,
+      "Responsa": 13,
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "ב\"י",
+     "sample": 25,
+     "meaning": "Beit Yosef",
+     "genres": {
+      "Codes": 22,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "ד\"מ",
+     "sample": 6,
+     "meaning": "Darkhei Moshe",
+     "genres": {
+      "Codes": 6
+     }
+    },
+    {
+     "term": "הרמ\"א",
+     "sample": 48,
+     "meaning": "Rema",
+     "genres": {
+      "Codes": 44,
+      "Responsa": 4
+     }
+    },
+    {
+     "term": "המ\"א",
+     "sample": 11,
+     "meaning": "Magen Avraham",
+     "genres": {
+      "Codes": 11
+     }
+    },
+    {
+     "term": "מג\"א",
+     "sample": 8,
+     "meaning": "Magen Avraham",
+     "genres": {
+      "Responsa": 8
+     }
+    },
+    {
+     "term": "הט\"ז",
+     "sample": 14,
+     "meaning": "Turei Zahav",
+     "genres": {
+      "Responsa": 12,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "ט\"ז",
+     "sample": 7,
+     "meaning": "Turei Zahav",
+     "genres": {
+      "Codes": 7
+     }
+    },
+    {
+     "term": "הש\"ך",
+     "sample": 10,
+     "meaning": "Siftei Kohen",
+     "genres": {
+      "Codes": 10
+     }
+    },
+    {
+     "term": "ש\"ך",
+     "sample": 11,
+     "meaning": "Siftei Kohen",
+     "genres": {
+      "Codes": 11
+     }
+    },
+    {
+     "term": "מ\"ב",
+     "sample": 0,
+     "meaning": "Mishnah Berurah"
+    },
+    {
+     "term": "שו\"ע",
+     "sample": 0,
+     "meaning": "Shulchan Arukh"
+    },
+    {
+     "term": "או\"ח",
+     "sample": 0,
+     "meaning": "Orach Chayim"
+    },
+    {
+     "term": "יו\"ד",
+     "sample": 11,
+     "meaning": "Yoreh De'ah",
+     "genres": {
+      "Chumash commentaries": 5,
+      "Responsa": 4,
+      "Midrash, lomdus, mussar": 2
+     }
+    },
+    {
+     "term": "אה\"ע",
+     "sample": 0,
+     "meaning": "Even HaEzer"
+    },
+    {
+     "term": "אבהע\"ז",
+     "sample": 0,
+     "meaning": "Even HaEzer"
+    },
+    {
+     "term": "חו\"מ",
+     "sample": 2,
+     "meaning": "Choshen Mishpat",
+     "genres": {
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "רשב\"ם",
+     "sample": 24,
+     "meaning": "Rashbam",
+     "genres": {
+      "Rishonim on Shas": 22,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "נ\"י",
+     "sample": 15,
+     "meaning": "Nimukei Yosef",
+     "genres": {
+      "Responsa": 15
+     }
+    },
+    {
+     "term": "מהרש\"א",
+     "sample": 0,
+     "meaning": "Maharsha"
+    },
+    {
+     "term": "פנ\"י",
+     "sample": 0,
+     "meaning": "Penei Yehoshua"
+    },
+    {
+     "term": "נוב\"י",
+     "sample": 0,
+     "meaning": "Noda BiYehudah"
+    },
+    {
+     "term": "חת\"ס",
+     "sample": 0,
+     "meaning": "Chatam Sofer"
+    },
+    {
+     "term": "הש\"ס",
+     "sample": 25,
+     "meaning": "Talmud",
+     "genres": {
+      "Codes": 10,
+      "Responsa": 8,
+      "Gemara": 7
+     }
+    },
+    {
+     "term": "ש\"ס",
+     "sample": 7,
+     "meaning": "Talmud",
+     "genres": {
+      "Codes": 7
+     }
+    },
+    {
+     "term": "ב\"ר",
+     "sample": 9,
+     "meaning": "Bereshit Rabbah",
+     "genres": {
+      "Rishonim on Shas": 7,
+      "Responsa": 2
+     }
+    },
+    {
+     "term": "מד\"ר",
+     "sample": 0,
+     "meaning": "Midrash Rabbah"
+    },
+    {
+     "term": "רז\"ל",
+     "sample": 12,
+     "meaning": "(the Sages)",
+     "genres": {
+      "Chumash commentaries": 10,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "חז\"ל",
+     "sample": 12,
+     "meaning": "(the Sages)",
+     "genres": {
+      "Responsa": 9,
+      "Chumash commentaries": 3
+     }
+    },
+    {
+     "term": "האר\"י",
+     "sample": 19,
+     "meaning": "Arizal",
+     "genres": {
+      "Responsa": 17,
+      "Codes": 2
+     }
+    }
+   ]
+  },
+  "ambiguous": {
+   "doc": "Seen in the sample with more than one meaning; never treat as a citation on their own.",
+   "items": [
+    {
+     "term": "ע\"ש",
+     "sample": 141,
+     "meaning": "עיין שם / ערב שבת / על שם",
+     "genres": {
+      "Codes": 103,
+      "Responsa": 20,
+      "Midrash, lomdus, mussar": 10,
+      "Gemara": 8
+     }
+    },
+    {
+     "term": "ה'",
+     "sample": 674,
+     "meaning": "divine name / 5 / הלכה ה",
+     "genres": {
+      "Chumash commentaries": 448,
+      "Codes": 130,
+      "Midrash, lomdus, mussar": 55,
+      "Rishonim on Shas": 25,
+      "Responsa": 12,
+      "Gemara": 4
+     }
+    },
+    {
+     "term": "כ'",
+     "sample": 57,
+     "meaning": "כתב / כתיב / 20",
+     "genres": {
+      "Codes": 39,
+      "Responsa": 13,
+      "Rishonim on Shas": 3,
+      "Chumash commentaries": 2
+     }
+    },
+    {
+     "term": "פ'",
+     "sample": 171,
+     "meaning": "פרק / פרשת / פירוש",
+     "genres": {
+      "Codes": 123,
+      "Rishonim on Shas": 41,
+      "Responsa": 4,
+      "Gemara": 3
+     }
+    },
+    {
+     "term": "ס'",
+     "sample": 52,
+     "meaning": "סימן / ספר / 60",
+     "genres": {
+      "Codes": 39,
+      "Responsa": 13
+     }
+    },
+    {
+     "term": "ב\"ה",
+     "sample": 19,
+     "meaning": "בית הלל / ברוך הוא / בעזרת השם",
+     "genres": {
+      "Gemara": 10,
+      "Rishonim on Shas": 7,
+      "Codes": 2
+     }
+    },
+    {
+     "term": "ר\"י",
+     "sample": 49,
+     "meaning": "Ri (Tosafot) / Rabbi Yehuda / Rabbi Yochanan",
+     "genres": {
+      "Rishonim on Shas": 18,
+      "Gemara": 14,
+      "Codes": 12,
+      "Responsa": 5
+     }
+    },
+    {
+     "term": "ר\"א",
+     "sample": 28,
+     "meaning": "Rabbi Eliezer / Rabbi Akiva (rare)",
+     "genres": {
+      "Gemara": 8,
+      "Codes": 7,
+      "Rishonim on Shas": 5,
+      "Chumash commentaries": 5,
+      "Responsa": 3
+     }
+    },
+    {
+     "term": "ש\"ש",
+     "sample": 97,
+     "meaning": "unclear in this sample (Nosei kelim)",
+     "genres": {
+      "Codes": 97
+     }
+    }
+   ]
+  }
+ }
+}

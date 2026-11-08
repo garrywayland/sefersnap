@@ -35,3 +35,14 @@ These were tested in a browser with mocked responses only. The first real run wi
 - the real Gemini free-tier behaviour.
 
 Errors and unexpected responses go to the Failure log.
+
+## Citation research (`tools/`, `data/`, `docs/`)
+
+Groundwork for recognising citations that Sefaria's Linker misses. These Python scripts are for development only; the app itself still has no build step.
+
+- `docs/citation-findings.md`: what a 160-page sample across genres shows about how seforim cite, and next steps for the app.
+- `docs/citation-formulas.md`: the full tables for each genre (formulas before quotes, and the most frequent abbreviations).
+- `data/citation-vocabulary.json`: the curated vocabulary (quote introducers, pointers, location markers, author abbreviations and ambiguous tokens), with sample counts.
+- `tools/mine_sample.py` regenerates the tables from the pages in `tools/sample_units.json`, and `tools/build_vocabulary.py` rebuilds the vocabulary. `tools/mine_formulas.py` does the same for a whole corpus (all of Bavli or Mishnah).
+
+Run them with Python 3 (standard library only) and a cache folder, e.g. `python3 tools/mine_sample.py --cache /tmp/sefaria-cache`.
