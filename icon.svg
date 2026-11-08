@@ -1,0 +1,18 @@
+<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1f3a5f"/>
+  <!-- open book -->
+  <path d="M96 150 Q176 120 248 158 V372 Q176 336 96 362 Z" fill="#f6efe0"/>
+  <path d="M416 150 Q336 120 264 158 V372 Q336 336 416 362 Z" fill="#fbf6ea"/>
+  <g stroke="#1f3a5f" stroke-width="10" stroke-linecap="round" opacity=".55">
+    <path d="M128 182 Q178 166 222 186"/>
+    <path d="M128 222 Q178 206 222 226"/>
+    <path d="M128 262 Q178 246 222 266"/>
+    <path d="M290 186 Q334 166 384 182"/>
+    <path d="M290 226 Q334 206 384 222"/>
+  </g>
+  <!-- chain link -->
+  <g fill="none" stroke="#e0a526" stroke-width="22" stroke-linecap="round">
+    <rect x="292" y="280" width="92" height="52" rx="26" transform="rotate(-35 338 306)"/>
+    <rect x="338" y="318" width="92" height="52" rx="26" transform="rotate(-35 384 344)"/>
+  </g>
+</svg>

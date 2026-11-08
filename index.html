@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SeferSnap</title>
+<meta name="description" content="Photograph a page of a sefer and get Sefaria links for its citations.">
+<meta name="theme-color" content="#1f3a5f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --bg: #f7f4ee; --surface: #ffffff; --text: #1d1d1f; --muted: #5f6368;
+  --border: #ddd6c8; --accent: #1f3a5f; --accent-text: #ffffff; --gold: #b7821a;
+  --mark: #fde9a8; --mark-fail: #f6c9c4; --danger: #a8322a; --ok: #2e6b3a;
+  --he: "Frank Ruehl CLM", "Taamey Frank CLM", "David CLM", "David", "Noto Serif Hebrew", "Times New Roman", serif;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --surface: #1d2128; --text: #ececec; --muted: #a3a8b0;
+    --border: #343a44; --accent: #8fb3e3; --accent-text: #0d1520; --gold: #e0b14a;
+    --mark: #5a4a17; --mark-fail: #5c2a26; --danger: #f08a80; --ok: #8fd19e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --surface: #1d2128; --text: #ececec; --muted: #a3a8b0;
+  --border: #343a44; --accent: #8fb3e3; --accent-text: #0d1520; --gold: #e0b14a;
+  --mark: #5a4a17; --mark-fail: #5c2a26; --danger: #f08a80; --ok: #8fd19e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text); font: 16px/1.5 var(--ui);
+  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+}
+header {
+  position: sticky; top: 0; z-index: 5; background: var(--accent); color: var(--accent-text);
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+}
+header h1 { font-size: 1.15rem; margin: 0; flex: 1; }
+main { max-width: 720px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+section h2 { font-size: 1rem; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+.hidden { display: none !important; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.row > * { flex: 1 1 auto; }
+button, .btn {
+  font: inherit; font-weight: 600; min-height: 48px; padding: 10px 16px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+button.primary, .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+header button { min-height: 44px; background: transparent; color: var(--accent-text); border-color: rgba(255,255,255,.35); }
+.big { min-height: 64px; font-size: 1.05rem; }
+.icon-btn { min-width: 48px; padding: 8px; }
+label { display: block; font-weight: 600; margin: 12px 0 4px; }
+input[type=text], input[type=password], input[type=number], input[type=url], select, textarea {
+  font: inherit; width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); min-height: 48px;
+}
+textarea.he, .he { font-family: var(--he); font-size: 1.2rem; line-height: 1.7; }
+textarea { min-height: 220px; resize: vertical; }
+.hint { color: var(--muted); font-size: .9rem; margin: 6px 0 0; }
+.notice { background: var(--mark); border-radius: 12px; padding: 12px 14px; }
+.error { color: var(--danger); font-weight: 600; white-space: pre-wrap; }
+.status { color: var(--muted); min-height: 1.5em; margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#preview { display: block; width: 100%; height: auto; border-radius: 10px; background: #000; }
+#preview.cropping { touch-action: none; outline: 3px solid var(--gold); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.toolbar button { flex: 1 1 30%; }
+#marked { white-space: pre-wrap; background: var(--bg); border-radius: 10px; padding: 12px; max-height: 50vh; overflow: auto; }
+mark { background: var(--mark); color: inherit; border-radius: 4px; padding: 0 2px; cursor: pointer; }
+mark.fail { background: var(--mark-fail); }
+.cards { display: grid; gap: 12px; }
+.card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg); }
+.card .quote { margin: 0 0 8px; font-family: var(--he); font-size: 1.25rem; }
+.card .ref { border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; }
+.card .refname { font-weight: 700; }
+.card .refname .he { font-size: 1.1rem; font-weight: 700; }
+.card .preview { margin: 6px 0 8px; font-family: var(--he); font-size: 1.05rem; color: var(--muted); }
+.card .btn { width: 100%; }
+.badge { display: inline-block; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--border); color: var(--text); margin-inline-start: 6px; vertical-align: middle; }
+.badge.ai { background: var(--gold); color: #1a1200; }
+.card.flash { outline: 3px solid var(--gold); }
+details summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+dialog { border: none; border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 32px)); background: var(--surface); color: var(--text); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+dialog form { padding: 16px; }
+dialog h2 { margin: 0 0 4px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.check input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-height: 40vh; overflow: auto; background: var(--bg); padding: 8px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SeferSnap</h1>
+  <button id="openSettings" class="icon-btn" aria-label="Settings" title="Settings">⚙︎ Settings</button>
+</header>
+
+<main>
+  <div id="keyNotice" class="notice hidden">
+    Add your Gemini API key in <a href="#" id="keyNoticeLink">Settings</a> to read photos. You can get a free key at Google AI Studio (aistudio.google.com/apikey). You can still paste text below and find citations without one.
+  </div>
+
+  <section>
+    <h2>1. Photo</h2>
+    <div class="row">
+      <button class="primary big" id="takePhoto">📷 Take photo</button>
+      <button class="big" id="pickPhoto">🖼 Choose from gallery</button>
+    </div>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+    <input type="file" id="galleryInput" accept="image/*" hidden>
+
+    <div id="previewWrap" class="hidden">
+      <canvas id="preview" style="margin-top:12px"></canvas>
+      <div class="toolbar">
+        <button id="rotateBtn">↻ Rotate</button>
+        <button id="cropBtn" aria-pressed="false">✂ Crop</button>
+        <button id="clearCropBtn" disabled>Clear crop</button>
+      </div>
+      <p class="hint" id="cropHint">Tip: crop to one column or block of text for better accuracy. Tap Crop, then drag over the part you want.</p>
+      <button class="primary big" id="ocrBtn" style="width:100%;margin-top:8px">Read text</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Text</h2>
+    <textarea id="ocrText" class="he" dir="rtl" lang="he" placeholder="הטקסט יופיע כאן. You can also paste or type text."></textarea>
+    <p class="hint">Fix any OCR mistakes before finding citations.</p>
+    <button class="primary big" id="linkBtn" style="width:100%;margin-top:8px">Find citations</button>
+    <div class="status" id="status" aria-live="polite"></div>
+  </section>
+
+  <section id="resultsSection" class="hidden">
+    <h2>3. Citations</h2>
+    <div id="summary" class="hint" style="margin:0 0 10px"></div>
+    <details id="markedWrap">
+      <summary>Show text with citations marked</summary>
+      <div id="marked" class="he" dir="rtl" lang="he"></div>
+    </details>
+    <div id="foundCards" class="cards" style="margin-top:12px"></div>
+    <div id="failedWrap" class="hidden">
+      <h2 style="margin:20px 0 10px">Not recognised</h2>
+      <div id="failedCards" class="cards"></div>
+    </div>
+  </section>
+
+  <section>
+    <details>
+      <summary>Failure log (<span id="logCount">0</span>)</summary>
+      <p class="hint">Citations Sefaria didn't recognise, plus errors and unexpected responses. Copy it to look for patterns.</p>
+      <div class="row" style="margin-top:8px">
+        <button id="copyLog">Copy log</button>
+        <button id="clearLog">Clear log</button>
+      </div>
+      <pre class="log" id="logView"></pre>
+    </details>
+  </section>
+</main>
+
+<dialog id="settingsDlg">
+  <form method="dialog" id="settingsForm">
+    <h2>Settings</h2>
+    <p class="hint">Stored only on this device.</p>
+
+    <label for="sKey">Gemini API key</label>
+    <div class="row">
+      <input type="password" id="sKey" autocomplete="off" spellcheck="false" style="flex:1 1 60%">
+      <button type="button" id="toggleKey" style="flex:0 0 auto">Show</button>
+    </div>
+
+    <label for="sModel">Gemini model</label>
+    <input type="text" id="sModel" list="modelList" autocomplete="off" spellcheck="false">
+    <datalist id="modelList"></datalist>
+    <button type="button" id="listModels" style="width:100%;margin-top:8px">List models available to my key</button>
+    <p class="hint" id="modelsMsg"></p>
+
+    <label for="sMaxSide">Image size sent to Gemini (longest side, px)</label>
+    <input type="number" id="sMaxSide" min="800" max="4000" step="100">
+
+    <label class="check"><input type="checkbox" id="sHybrid">
+      <span>Also ask Gemini to suggest citations (experimental). Each one is checked against Sefaria before it is shown. Helps with “שם”, “הנ״ל” and abbreviated titles.</span></label>
+
+    <details style="margin-top:12px">
+      <summary>Advanced</summary>
+      <label for="sBase">Sefaria API base URL</label>
+      <input type="url" id="sBase" spellcheck="false">
+      <p class="hint">Change this only if you set up a proxy (e.g. a Cloudflare Worker) because of CORS errors.</p>
+      <label class="check"><input type="checkbox" id="sPlain">
+        <span>Send find-refs body as text/plain (avoids a CORS preflight). The app falls back to the other type automatically if one fails.</span></label>
+    </details>
+
+    <div class="row" style="margin-top:16px">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="save" class="primary" id="saveSettings">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+
+// ---------- settings & storage ----------
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('sl.' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('sl.' + k, JSON.stringify(v)); } catch {} }
+};
+const DEFAULTS = {
+  apiKey: '', model: 'gemini-2.5-flash', maxSide: 2400,
+  sefariaBase: 'https://www.sefaria.org', hybrid: false, plainText: true
+};
+let settings = Object.assign({}, DEFAULTS, store.get('settings', {}));
+const saveSettings = () => store.set('settings', settings);
+
+// ---------- helpers ----------
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const stripHtml = (s) => String(s ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const flatten = (x) => Array.isArray(x) ? x.flat(Infinity).join(' ') : (x ?? '');
+const truncate = (s, n) => s.length > n ? s.slice(0, n).trimEnd() + '…' : s;
+const sefariaBase = () => (settings.sefariaBase || DEFAULTS.sefariaBase).replace(/\/+$/, '');
+const modelName = () => (settings.model || DEFAULTS.model).trim().replace(/^models\//, '');
+
+function setStatus(msg, { busy = false, error = false } = {}) {
+  const el = $('#status');
+  el.innerHTML = (busy ? '<span class="spinner"></span>' : '') + `<span class="${error ? 'error' : ''}">${esc(msg)}</span>`;
+}
+
+function sefariaUrl(ref) {
+  // "Shulchan Arukh, Orach Chayim 695:2" -> "Shulchan_Arukh,_Orach_Chayim.695.2"
+  let s = ref.trim().replace(/:/g, '.');
+  s = s.replace(/ (?=\d+[ab]?(?:[.\-]|$))/, '.'); // last title/section boundary
+  s = s.replace(/ /g, '_');
+  return 'https://www.sefaria.org/' + encodeURI(s).replace(/\?/g, '%3F').replace(/#/g, '%23');
+}
+
+// ---------- failure log ----------
+function logEvent(type, data) {
+  const log = store.get('log', []);
+  log.push(Object.assign({ t: new Date().toISOString(), type }, data));
+  while (log.length > 300) log.shift();
+  store.set('log', log);
+  renderLog();
+}
+function renderLog() {
+  const log = store.get('log', []);
+  $('#logCount').textContent = log.length;
+  $('#logView').textContent = log.slice(-60).reverse().map((e) => JSON.stringify(e)).join('\n');
+}
+$('#copyLog').onclick = async () => {
+  const txt = store.get('log', []).map((e) => JSON.stringify(e)).join('\n');
+  try { await navigator.clipboard.writeText(txt); setStatus('Log copied.'); }
+  catch { $('#logView').textContent = txt; setStatus('Could not copy automatically; the full log is shown below.'); }
+};
+$('#clearLog').onclick = () => { if (confirm('Clear the failure log?')) { store.set('log', []); renderLog(); } };
+
+// ---------- settings dialog ----------
+const dlg = $('#settingsDlg');
+function openSettings() {
+  $('#sKey').value = settings.apiKey;
+  $('#sModel').value = settings.model;
+  $('#sMaxSide').value = settings.maxSide;
+  $('#sHybrid').checked = settings.hybrid;
+  $('#sBase').value = settings.sefariaBase;
+  $('#sPlain').checked = settings.plainText;
+  $('#modelsMsg').textContent = '';
+  dlg.showModal();
+}
+$('#openSettings').onclick = openSettings;
+$('#keyNoticeLink').onclick = (e) => { e.preventDefault(); openSettings(); };
+$('#toggleKey').onclick = () => {
+  const i = $('#sKey'); i.type = i.type === 'password' ? 'text' : 'password';
+  $('#toggleKey').textContent = i.type === 'password' ? 'Show' : 'Hide';
+};
+dlg.addEventListener('close', () => {
+  if (dlg.returnValue !== 'save') return;
+  settings.apiKey = $('#sKey').value.trim();
+  settings.model = $('#sModel').value.trim().replace(/^models\//, '') || DEFAULTS.model;
+  settings.maxSide = Math.min(4000, Math.max(800, parseInt($('#sMaxSide').value, 10) || DEFAULTS.maxSide));
+  settings.hybrid = $('#sHybrid').checked;
+  settings.sefariaBase = $('#sBase').value.trim() || DEFAULTS.sefariaBase;
+  settings.plainText = $('#sPlain').checked;
+  saveSettings();
+  updateKeyNotice();
+});
+$('#listModels').onclick = async () => {
+  const key = $('#sKey').value.trim();
+  const msg = $('#modelsMsg');
+  if (!key) { msg.textContent = 'Enter your API key first.'; return; }
+  msg.textContent = 'Loading…';
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    const models = (data.models || [])
+      .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map((m) => m.name.replace(/^models\//, ''))
+      .filter((n) => /gemini/i.test(n));
+    $('#modelList').innerHTML = models.map((n) => `<option value="${esc(n)}">`).join('');
+    msg.textContent = models.length
+      ? `${models.length} models. Tap the model box to pick one. "flash" models are fast and on the free tier.`
+      : 'No suitable models returned.';
+  } catch (e) {
+    msg.textContent = 'Could not list models: ' + e.message;
+  }
+};
+function updateKeyNotice() { $('#keyNotice').classList.toggle('hidden', !!settings.apiKey); }
+
+// ---------- image: load, rotate, crop, export ----------
+let src = null;   // full-resolution working canvas (capped at 3200px)
+let crop = null;  // {x,y,w,h} in src coordinates
+let cropping = false;
+const preview = $('#preview');
+
+$('#takePhoto').onclick = () => $('#cameraInput').click();
+$('#pickPhoto').onclick = () => $('#galleryInput').click();
+for (const id of ['#cameraInput', '#galleryInput']) {
+  $(id).addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (f) loadImage(f).catch((err) => setStatus(err.message, { error: true }));
+  });
+}
+
+async function loadImage(file) {
+  setStatus('Loading photo…', { busy: true });
+  let img;
+  try {
+    img = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error('Could not read that image.'));
+      i.src = URL.createObjectURL(file);
+    });
+  }
+  const w = img.width, h = img.height, s = Math.min(1, 3200 / Math.max(w, h));
+  src = document.createElement('canvas');
+  src.width = Math.round(w * s); src.height = Math.round(h * s);
+  src.getContext('2d').drawImage(img, 0, 0, src.width, src.height);
+  if (img.close) img.close();
+  crop = null; setCropping(false);
+  $('#previewWrap').classList.remove('hidden');
+  drawPreview();
+  setStatus('');
+  if (settings.apiKey) $('#ocrBtn').focus();
+}
+
+function drawPreview() {
+  if (!src) return;
+  const s = Math.min(1, 1200 / Math.max(src.width, src.height));
+  preview.width = Math.round(src.width * s); preview.height = Math.round(src.height * s);
+  const ctx = preview.getContext('2d');
+  ctx.drawImage(src, 0, 0, preview.width, preview.height);
+  if (crop) {
+    const r = { x: crop.x * s, y: crop.y * s, w: crop.w * s, h: crop.h * s };
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(0, 0, preview.width, r.y);
+    ctx.fillRect(0, r.y + r.h, preview.width, preview.height - r.y - r.h);
+    ctx.fillRect(0, r.y, r.x, r.h);
+    ctx.fillRect(r.x + r.w, r.y, preview.width - r.x - r.w, r.h);
+    ctx.strokeStyle = '#e0a526'; ctx.lineWidth = 3; ctx.strokeRect(r.x, r.y, r.w, r.h);
+  }
+  $('#clearCropBtn').disabled = !crop;
+}
+
+$('#rotateBtn').onclick = () => {
+  if (!src) return;
+  const c = document.createElement('canvas');
+  c.width = src.height; c.height = src.width;
+  const ctx = c.getContext('2d');
+  ctx.translate(c.width, 0); ctx.rotate(Math.PI / 2); ctx.drawImage(src, 0, 0);
+  src = c; crop = null; drawPreview();
+};
+function setCropping(on) {
+  cropping = on;
+  preview.classList.toggle('cropping', on);
+  $('#cropBtn').setAttribute('aria-pressed', on);
+  $('#cropBtn').textContent = on ? '✓ Done' : '✂ Crop';
+  $('#cropHint').textContent = on
+    ? 'Drag over the text you want. Tap Done when finished.'
+    : 'Tip: crop to one column or block of text for better accuracy. Tap Crop, then drag over the part you want.';
+}
+$('#cropBtn').onclick = () => setCropping(!cropping);
+$('#clearCropBtn').onclick = () => { crop = null; drawPreview(); };
+
+let dragStart = null;
+function toSrc(e) {
+  const r = preview.getBoundingClientRect();
+  const x = Math.min(Math.max(0, (e.clientX - r.left) / r.width), 1) * src.width;
+  const y = Math.min(Math.max(0, (e.clientY - r.top) / r.height), 1) * src.height;
+  return { x, y };
+}
+preview.addEventListener('pointerdown', (e) => {
+  if (!cropping || !src) return;
+  preview.setPointerCapture(e.pointerId);
+  dragStart = toSrc(e);
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!dragStart) return;
+  const p = toSrc(e);
+  crop = { x: Math.min(p.x, dragStart.x), y: Math.min(p.y, dragStart.y), w: Math.abs(p.x - dragStart.x), h: Math.abs(p.y - dragStart.y) };
+  drawPreview();
+});
+const endDrag = () => {
+  if (!dragStart) return;
+  dragStart = null;
+  if (crop && (crop.w < 40 || crop.h < 40)) crop = null;
+  drawPreview();
+};
+preview.addEventListener('pointerup', endDrag);
+preview.addEventListener('pointercancel', endDrag);
+
+function exportJpegBase64() {
+  const r = crop || { x: 0, y: 0, w: src.width, h: src.height };
+  const s = Math.min(1, settings.maxSide / Math.max(r.w, r.h));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(r.w * s)); c.height = Math.max(1, Math.round(r.h * s));
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
+
+// ---------- Gemini OCR ----------
+const OCR_PROMPT = `You are an OCR engine for printed Hebrew and Aramaic seforim.
+Transcribe ALL the text on this page exactly as printed.
+- Preserve nikud, punctuation and every abbreviation exactly as printed (e.g. ע"א, מ"ש, שו"ע, ד"ה, הנ"ל). Write abbreviation marks with a plain double quote " and a plain apostrophe '.
+- Read right to left, in the page's natural reading order.
+- If the page has distinguishable parts (main text, commentaries, footnotes, marginal notes), transcribe each part as its own block, separated by a line containing only ---.
+- Do not translate, explain, correct, complete or expand anything. Do not add headings or commentary of your own.`;
+
+const OCR_PLAIN_TAIL = `\nOutput the transcription as plain text only.`;
+
+const OCR_HYBRID_TAIL = `
+Also list every citation or reference to another text that appears on the page (Tanakh, Mishnah, Talmud, Midrash, Rishonim, Shulchan Arukh, responsa, etc.), including implicit ones such as "שם", "הנ"ל" or "בתוס' ד"ה ...", resolved using the context of the page.
+For each, give the exact quote from your transcription and your best guess of the reference in Sefaria's English reference format, as specific as possible (e.g. "Genesis 1:1", "Bava Metzia 59b", "Shulchan Arukh, Orach Chayim 695:2", "Rashi on Berakhot 2a:1", "Tosafot on Shabbat 21b"). If you cannot tell the reference, omit that citation.
+Respond with JSON only, in this shape:
+{"text": "<the full transcription>", "citations": [{"quote": "<exact quote>", "ref": "<Sefaria English ref>"}]}`;
+
+async function callGemini(body) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName())}:generateContent`;
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': settings.apiKey },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    logEvent('error', { where: 'gemini', msg: String(e) });
+    throw new Error('Could not reach Gemini. Check your connection. (If this keeps happening it may be a CORS problem; see the log.)');
+  }
+}
+
+async function runGemini(b64) {
+  const hybrid = settings.hybrid;
+  const gc = { temperature: 0 };
+  if (hybrid) gc.responseMimeType = 'application/json';
+  if (/2\.5-flash/.test(modelName())) gc.thinkingConfig = { thinkingBudget: 0 }; // faster OCR
+  const body = {
+    contents: [{ role: 'user', parts: [
+      { text: OCR_PROMPT + (hybrid ? OCR_HYBRID_TAIL : OCR_PLAIN_TAIL) },
+      { inline_data: { mime_type: 'image/jpeg', data: b64 } }
+    ] }],
+    generationConfig: gc
+  };
+  let res = await callGemini(body);
+  if (res.status === 400 && gc.thinkingConfig) { // some models reject thinkingBudget 0
+    delete gc.thinkingConfig;
+    res = await callGemini(body);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const m = data.error?.message || `HTTP ${res.status}`;
+    logEvent('error', { where: 'gemini', status: res.status, msg: m });
+    if (res.status === 429) throw new Error('Gemini rate limit reached. Wait a minute and try again.\n' + m);
+    if (res.status === 400 && /api key/i.test(m)) throw new Error('Gemini rejected the API key. Check it in Settings.');
+    if (res.status === 404) throw new Error(`Model "${modelName()}" was not found. Use "List models" in Settings.`);
+    throw new Error('Gemini error: ' + m);
+  }
+  const cand = data.candidates && data.candidates[0];
+  if (!cand) {
+    const why = data.promptFeedback?.blockReason || 'no response';
+    logEvent('error', { where: 'gemini', msg: 'no candidates', why });
+    throw new Error('Gemini returned nothing (' + why + ').');
+  }
+  const raw = (cand.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('');
+  if (!raw.trim()) {
+    const fr = cand.finishReason || 'unknown';
+    logEvent('error', { where: 'gemini', msg: 'empty text', finishReason: fr });
+    if (fr === 'RECITATION') throw new Error('Gemini stopped with RECITATION: it sometimes refuses to reproduce well-known texts word for word. Try cropping to a smaller area.');
+    throw new Error('Gemini returned no text (finish reason: ' + fr + ').');
+  }
+  if (!hybrid) return { text: raw.trim(), citations: [] };
+  try {
+    const obj = JSON.parse(raw.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
+    return { text: String(obj.text || '').trim(), citations: Array.isArray(obj.citations) ? obj.citations : [] };
+  } catch {
+    logEvent('shape', { where: 'gemini-json', sample: raw.slice(0, 300) });
+    return { text: raw.trim(), citations: [] };
+  }
+}
+
+let aiCitations = []; // from the latest OCR, used when hybrid is on
+let aiSourceText = '';
+
+$('#ocrBtn').onclick = async () => {
+  if (!src) return;
+  if (!settings.apiKey) { updateKeyNotice(); openSettings(); return; }
+  const btn = $('#ocrBtn'); btn.disabled = true;
+  setStatus('Reading the page with Gemini…', { busy: true });
+  try {
+    const t0 = Date.now();
+    const out = await runGemini(exportJpegBase64());
+    $('#ocrText').value = out.text;
+    aiCitations = out.citations; aiSourceText = out.text;
+    setStatus(`Text read in ${((Date.now() - t0) / 1000).toFixed(1)} s. Check it, then tap Find citations.`);
+    $('#ocrText').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    setStatus(e.message, { error: true });
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ---------- Sefaria linker ----------
+function extractBody(d, depth = 0) {
+  // Find a find-refs response ({body:{results:[...]}}) wherever it sits in the reply.
+  if (!d || typeof d !== 'object' || depth > 5) return null;
+  if (d.body && Array.isArray(d.body.results)) {
+    return { results: d.body.results, refData: d.body.ref_data || d.ref_data || {} };
+  }
+  for (const k of ['result', 'data', 'response', 'value']) {
+    let x = d[k];
+    if (typeof x === 'string') { try { x = JSON.parse(x); } catch { continue; } }
+    const r = extractBody(x, depth + 1);
+    if (r) return r;
+  }
+  return null;
+}
+
+async function postFindRefs(text) {
+  const body = JSON.stringify({ text: { title: '', body: text }, lang: 'he' });
+  const url = sefariaBase() + '/api/find-refs?with_text=1&max_segments=1';
+  const types = settings.plainText ? ['text/plain', 'application/json'] : ['application/json', 'text/plain'];
+  let lastErr = null;
+  for (const ct of types) {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': ct }, body });
+      if (res.ok || res.status === 202) {
+        if (ct !== types[0]) {
+          settings.plainText = ct === 'text/plain'; saveSettings();
+          logEvent('note', { msg: `find-refs worked with Content-Type ${ct}; switched default` });
+        }
+        return res;
+      }
+      lastErr = new Error(`Sefaria find-refs returned HTTP ${res.status}.`);
+      logEvent('error', { where: 'find-refs', contentType: ct, status: res.status, sample: (await res.text().catch(() => '')).slice(0, 300) });
+      if (res.status >= 500 || res.status === 429) break; // retrying with another type won't help
+    } catch (e) {
+      lastErr = new Error('Could not reach Sefaria (network or CORS blocked).');
+      logEvent('error', { where: 'find-refs', contentType: ct, msg: String(e) });
+    }
+  }
+  throw lastErr;
+}
+
+async function findRefs(text) {
+  const res = await postFindRefs(text);
+  const data = await res.json().catch(() => null);
+  const direct = extractBody(data);
+  if (direct) return direct;
+  const taskId = data && (data.task_id || data.taskId || data.id);
+  if (!taskId) {
+    logEvent('shape', { where: 'find-refs', status: res.status, sample: JSON.stringify(data).slice(0, 800) });
+    throw new Error('Sefaria replied in an unexpected format. Details are in the failure log.');
+  }
+  return pollTask(taskId);
+}
+
+async function pollTask(id) {
+  const deadline = Date.now() + 30000;
+  let delay = 600, last = null;
+  while (Date.now() < deadline) {
+    await sleep(delay);
+    delay = Math.min(delay * 1.4, 2500);
+    let d;
+    try {
+      const r = await fetch(sefariaBase() + '/api/async/' + encodeURIComponent(id));
+      d = await r.json();
+      if (!r.ok && r.status !== 202) throw new Error('HTTP ' + r.status);
+    } catch (e) {
+      logEvent('error', { where: 'async-poll', msg: String(e) });
+      throw new Error('Lost contact with Sefaria while waiting for results.');
+    }
+    last = d;
+    const state = String(d.state || d.status || '').toUpperCase();
+    if (/FAIL|ERROR|REVOKED/.test(state)) {
+      logEvent('error', { where: 'async-poll', state, sample: JSON.stringify(d).slice(0, 500) });
+      throw new Error('Sefaria could not process the text (' + state + ').');
+    }
+    const b = extractBody(d);
+    if (b) return b;
+    if (/SUCCESS|DONE|COMPLETE|FINISHED/.test(state) || d.ready === true) {
+      logEvent('shape', { where: 'async-poll', sample: JSON.stringify(d).slice(0, 800) });
+      throw new Error('Sefaria finished, but the reply was in an unexpected format. Details are in the failure log.');
+    }
+    setStatus(`Waiting for Sefaria… ${state ? '(' + state.toLowerCase() + ')' : ''}`, { busy: true });
+  }
+  logEvent('error', { where: 'async-poll', msg: 'timeout', last: JSON.stringify(last).slice(0, 500) });
+  throw new Error('Sefaria took more than 30 seconds. Try again, or try a shorter piece of text.');
+}
+
+async function validateRef(ref) {
+  try {
+    const r = await fetch(sefariaBase() + '/api/name/' + encodeURIComponent(ref) + '?limit=0');
+    const d = await r.json();
+    if (!d.is_ref) return null;
+    return { ref: d.ref || ref, heRef: d.heRef || '', url: d.url || '' };
+  } catch (e) {
+    logEvent('error', { where: 'name-api', ref, msg: String(e) });
+    return null;
+  }
+}
+
+// ---------- results rendering ----------
+function refBlock(ref, rd) {
+  const he = rd && (rd.heRef || rd.he_ref);
+  const textHe = rd && truncate(stripHtml(flatten(rd.he)), 220);
+  const textEn = rd && truncate(stripHtml(flatten(rd.en)), 220);
+  const preview = textHe || textEn;
+  const href = rd && rd.url ? 'https://www.sefaria.org/' + String(rd.url).replace(/^\/+/, '') : sefariaUrl(ref);
+  return `<div class="ref">
+    <div class="refname">${he ? `<span class="he" dir="rtl" lang="he">${esc(he)}</span> · ` : ''}<span>${esc(ref)}</span></div>
+    ${preview ? `<p class="preview" dir="${textHe ? 'rtl' : 'ltr'}" lang="${textHe ? 'he' : 'en'}">${esc(preview)}</p>` : ''}
+    <a class="btn primary" href="${esc(href)}" target="_blank" rel="noopener">Open in Sefaria ↗</a>
+  </div>`;
+}
+
+function renderResults(text, linker, extras) {
+  const results = (linker.results || []).slice().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
+  const ok = results.filter((r) => !r.linkFailed && r.refs && r.refs.length);
+  const bad = results.filter((r) => r.linkFailed || !r.refs || !r.refs.length);
+
+  // highlighted text
+  let html = '', pos = 0;
+  results.forEach((r) => {
+    const s = r.startChar, e = r.endChar;
+    if (typeof s !== 'number' || typeof e !== 'number' || s < pos || e > text.length) return;
+    const idx = results.indexOf(r);
+    html += esc(text.slice(pos, s)) +
+      `<mark data-card="c${idx}" class="${ok.includes(r) ? '' : 'fail'}">${esc(text.slice(s, e))}</mark>`;
+    pos = e;
+  });
+  html += esc(text.slice(pos));
+  $('#marked').innerHTML = html;
+
+  $('#foundCards').innerHTML = ok.map((r) => `<article class="card" id="c${results.indexOf(r)}">
+      <p class="quote" dir="rtl" lang="he">${esc(r.text || text.slice(r.startChar, r.endChar))}</p>
+      ${r.refs.map((ref) => refBlock(ref, linker.refData[ref])).join('')}
+    </article>`).join('') +
+    extras.map((x) => `<article class="card">
+      <p class="quote" dir="rtl" lang="he">${esc(x.quote || '')}<span class="badge ai">AI suggestion</span></p>
+      ${refBlock(x.ref, { heRef: x.heRef, url: x.url })}
+    </article>`).join('');
+
+  $('#failedCards').innerHTML = bad.map((r) => `<article class="card" id="c${results.indexOf(r)}">
+      <p class="quote" dir="rtl" lang="he">${esc(r.text || text.slice(r.startChar, r.endChar))}</p>
+      <p class="hint" style="margin:0">${r.refs && r.refs.length ? '' : 'Looks like a citation, but Sefaria could not resolve it.'}</p>
+    </article>`).join('');
+  $('#failedWrap').classList.toggle('hidden', !bad.length);
+
+  const total = ok.length + extras.length;
+  $('#summary').textContent = total || bad.length
+    ? `${total} linked${extras.length ? ` (${extras.length} AI-suggested)` : ''}, ${bad.length} not recognised.`
+    : 'No citations found in this text.';
+  $('#resultsSection').classList.remove('hidden');
+  return { ok, bad };
+}
+
+$('#marked').addEventListener('click', (e) => {
+  const m = e.target.closest('mark');
+  if (!m) return;
+  const card = document.getElementById(m.dataset.card);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 1500);
+});
+
+$('#linkBtn').onclick = async () => {
+  const text = $('#ocrText').value.trim();
+  if (!text) { setStatus('There is no text yet. Take a photo or paste some text.', { error: true }); return; }
+  const btn = $('#linkBtn'); btn.disabled = true;
+  setStatus('Sending text to Sefaria…', { busy: true });
+  try {
+    const t0 = Date.now();
+    const linker = await findRefs(text);
+
+    // Optional: AI-suggested refs not already found, each validated by Sefaria.
+    let extras = [];
+    if (settings.hybrid && aiCitations.length && aiSourceText) {
+      setStatus('Checking AI-suggested citations…', { busy: true });
+      const have = new Set();
+      linker.results.forEach((r) => (r.refs || []).forEach((x) => have.add(x.toLowerCase())));
+      const cands = aiCitations.filter((c) => c && c.ref && !have.has(String(c.ref).toLowerCase())).slice(0, 20);
+      const checked = await Promise.all(cands.map(async (c) => {
+        const v = await validateRef(String(c.ref));
+        if (!v) { logEvent('ai-ref-rejected', { quote: c.quote, ref: c.ref }); return null; }
+        return have.has(v.ref.toLowerCase()) ? null : Object.assign({ quote: c.quote }, v);
+      }));
+      const seen = new Set();
+      extras = checked.filter((x) => x && !seen.has(x.ref) && seen.add(x.ref));
+    }
+
+    const { ok, bad } = renderResults(text, linker, extras);
+    bad.forEach((r) => logEvent('unrecognised', {
+      text: r.text,
+      context: text.slice(Math.max(0, r.startChar - 40), Math.min(text.length, r.endChar + 40))
+    }));
+    setStatus(`Done in ${((Date.now() - t0) / 1000).toFixed(1)} s.`);
+    if (ok.length || extras.length || bad.length) $('#resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    setStatus(e.message, { error: true });
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ---------- start ----------
+updateKeyNotice();
+renderLog();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW registration failed', e));
+}
+</script>
+</body>
+</html>
