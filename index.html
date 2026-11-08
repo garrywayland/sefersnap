@@ -97,6 +97,12 @@ dialog form { padding: 16px; }
 dialog h2 { margin: 0 0 4px; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
 .check input { width: 22px; height: 22px; margin-top: 2px; flex: none; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg);
+  color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-family: var(--he); font-size: 1.05rem; }
+.chip small { font-family: var(--ui); color: var(--muted); font-size: .8rem; }
+.page-title { font-family: var(--he); font-size: 1.6rem; font-weight: 700; margin: 0; }
+#pageBody details { margin-top: 10px; }
 pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-height: 40vh; overflow: auto; background: var(--bg); padding: 8px; border-radius: 8px; }
 </style>
 </head>
@@ -135,9 +141,17 @@ pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-h
   <section>
     <h2>2. Text</h2>
     <textarea id="ocrText" class="he" dir="rtl" lang="he" placeholder="הטקסט יופיע כאן. You can also paste or type text."></textarea>
-    <p class="hint">Fix any OCR mistakes before finding citations.</p>
-    <button class="primary big" id="linkBtn" style="width:100%;margin-top:8px">Find citations</button>
+    <p class="hint">Fix any OCR mistakes before finding citations. From Google Lens: select the text, tap Copy, then Paste &amp; find. For a standard page (Gemara, Shulchan Aruch, Mishnah Berurah, Rambam) the columns don't need to be in order: SeferSnap works out which page it is.</p>
+    <div class="row" style="margin-top:8px">
+      <button class="big" id="pasteBtn">📋 Paste &amp; find</button>
+      <button class="primary big" id="linkBtn">Find citations</button>
+    </div>
     <div class="status" id="status" aria-live="polite"></div>
+  </section>
+
+  <section id="pageSection" class="hidden">
+    <h2>This page</h2>
+    <div id="pageBody"></div>
   </section>
 
   <section id="resultsSection" class="hidden">
@@ -647,9 +661,9 @@ function sefariaText(ref) {
   return textCache.get(ref);
 }
 
-async function sefariaSearch(query, filters) {
+async function sefariaSearch(query, filters, { slop = 2, size = 20 } = {}) {
   const body = {
-    query, type: 'text', field: 'naive_lemmatizer', slop: 2, size: 20,
+    query, type: 'text', field: 'naive_lemmatizer', slop, size,
     filters, filter_fields: filters.map(() => 'path'), source_proj: ['ref', 'heRef', 'path']
   };
   // text/plain keeps this a "simple" request, so the browser sends no CORS preflight.
@@ -827,6 +841,103 @@ $('#marked').addEventListener('click', (e) => {
   card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 1500);
 });
 
+// ---------- page identification ----------
+const IDENT_FILTERS = ['Talmud', 'Talmud Commentary', 'Halakhah', 'Mishnah', 'Mishnah Commentary'];
+const MIN_PROBES = 4;
+
+async function identifyPage(text) {
+  const probes = Cite.probeWindows(text, 20);
+  if (probes.length < MIN_PROBES) return null;   // too little text to vote on
+  const picks = await mapLimit(probes, 4, async (q) => {
+    try { return Cite.pickPageHit(await sefariaSearch(q, IDENT_FILTERS, { slop: 1, size: 10 })); }
+    catch (e) { logEvent('error', { where: 'identify', msg: String(e) }); return []; }
+  });
+  const v = Cite.votePage(picks);
+  if (v.status === 'unclear') {
+    logEvent('page-unclear', { best: v.page.key, votes: v.votes, runnerUp: v.runnerUp && v.runnerUp.page.key, runnerUpVotes: v.runnerUp && v.runnerUp.votes });
+  }
+  return v;
+}
+
+const PAGE_LINK_GROUPS = [['Tanakh', 'Verses'], ['Mishnah', 'Mishnah'], ['Tosefta', 'Tosefta'], ['Talmud', 'Talmud'],
+                          ['Midrash', 'Midrash'], ['Halakhah', 'Halakhah']];
+const TEXT_NAMES_HE = {
+  Gemara: 'גמרא', Rashi: 'רש"י', Tosafot: 'תוספות', Rashbam: 'רשב"ם', 'Shulchan Arukh': 'שולחן ערוך', 'Mishnah Berurah': 'משנה ברורה',
+  'Magen Avraham': 'מגן אברהם', 'Turei Zahav': 'ט"ז', 'Siftei Kohen': 'ש"ך', 'Biur Halacha': 'ביאור הלכה', "Sha'ar HaTziyun": 'שער הציון',
+  "Ba'er Hetev": 'באר היטב', Rambam: 'רמב"ם', 'Kesef Mishneh': 'כסף משנה', 'Maggid Mishneh': 'מגיד משנה', Mishnah: 'משנה',
+  Bartenura: 'ברטנורא', Tur: 'טור', 'Beit Yosef': 'בית יוסף', Bach: 'ב"ח',
+};
+
+/** Sources cited on the identified page, from Sefaria's links for the page and the commentaries matched on it. */
+async function pageLinks(v) {
+  const sections = [...new Set([v.page.main, ...Object.values(v.texts).map((t) => t.section)])];
+  const lists = await mapLimit(sections, 3, async (sec) => {
+    try { const r = await fetch(sefariaBase() + '/api/links/' + encodeURIComponent(sec) + '?with_text=0'); return r.ok ? await r.json() : []; }
+    catch { return []; }
+  });
+  const groups = {}, seen = new Set();
+  for (const l of lists.flat()) {
+    if (!l || ['commentary', 'mishnah in talmud', 'targum', 'translation'].includes(l.type)) continue;
+    const ref = l.sourceRef || l.ref;
+    if (!ref || seen.has(ref) || !PAGE_LINK_GROUPS.some(([c]) => c === l.category)) continue;
+    const p = Cite.pageOf(ref);
+    if (p && p.key === v.page.key) continue;                       // the page's own texts
+    if (l.category === 'Halakhah' && !/^(Mishneh Torah|Shulchan Arukh|Tur)\b/.test(ref)) continue;
+    seen.add(ref);
+    (groups[l.category] = groups[l.category] || []).push({ ref, he: l.sourceHeRef || ref });
+  }
+  return groups;
+}
+
+async function renderPage(v) {
+  const sec = $('#pageSection'), body = $('#pageBody');
+  // No standard page, or only one stray phrase agreeing: say nothing rather than add noise.
+  if (!v || v.status === 'none' || (v.status === 'unclear' && v.votes < 2)) { sec.classList.add('hidden'); return false; }
+  sec.classList.remove('hidden');
+  const heOf = async (ref) => { const t = await sefariaText(ref); return (t && t.heRef) || ref; };
+  if (v.status === 'unclear') {
+    const cands = [v.page, v.runnerUp && v.runnerUp.page].filter(Boolean);
+    const names = await Promise.all(cands.map((p) => heOf(p.main)));
+    body.innerHTML = `<p style="margin:0">Couldn't tell which page this is. Closest matches:</p>
+      <div class="chips">${cands.map((p, i) => `<a class="chip" href="${esc(sefariaUrl(p.main))}" target="_blank" rel="noopener">${esc(names[i])} <small>${esc(p.main)}</small></a>`).join('')}</div>`;
+    return false;
+  }
+  body.innerHTML = '<div class="status"><span class="spinner"></span><span>Loading the page from Sefaria…</span></div>';
+  const [heMain, groups] = await Promise.all([heOf(v.page.main), pageLinks(v)]);
+  // A single hit in some other commentary is usually that work quoting the page, not part of it.
+  const texts = Object.entries(v.texts)
+    .filter(([, t]) => t.refs.length >= 2 || t.section === v.page.main)
+    .sort((a, b) => b[1].refs.length - a[1].refs.length);
+  const group = ([cat, label]) => {
+    const list = groups[cat];
+    if (!list || !list.length) return '';
+    const name = cat === 'Halakhah' && v.page.kind === 'talmud' ? 'Halakhah (Ein Mishpat)' : label;
+    return `<details${cat === 'Tanakh' ? ' open' : ''}><summary>${esc(name)} (${list.length})</summary>
+      <div class="chips">${list.map((x) => `<a class="chip" href="${esc(sefariaUrl(x.ref))}" target="_blank" rel="noopener" dir="rtl">${esc(x.he)}</a>`).join('')}</div></details>`;
+  };
+  const sources = PAGE_LINK_GROUPS.map(group).join('');
+  body.innerHTML = `
+    <p class="page-title" dir="rtl" lang="he">${v.status === 'likely' ? '<small class="hint" dir="ltr">Probably </small>' : ''}${esc(heMain)}</p>
+    <p class="hint" style="margin:2px 0 10px">${esc(v.page.main)} · matched ${v.votes} of ${v.probes} phrases</p>
+    <a class="btn primary" style="width:100%" href="${esc(sefariaUrl(v.page.main))}" target="_blank" rel="noopener">Open this page in Sefaria ↗</a>
+    <p class="hint" style="margin:12px 0 0">Texts recognised on the page:</p>
+    <div class="chips">${texts.map(([name, t]) => `<a class="chip" href="${esc(sefariaUrl(t.section))}" target="_blank" rel="noopener">${esc(TEXT_NAMES_HE[name] || name)} <small>${t.refs.length}</small></a>`).join('')}</div>
+    ${sources ? `<p class="hint" style="margin:14px 0 0">Sources cited on this page (from Sefaria):</p>${sources}` : ''}
+    ${v.status === 'likely' && v.runnerUp ? `<p class="hint" style="margin-top:12px">Not this page? Also possible: <a href="${esc(sefariaUrl(v.runnerUp.page.main))}" target="_blank" rel="noopener">${esc(v.runnerUp.page.main)}</a></p>` : ''}`;
+  return true;
+}
+
+$('#pasteBtn').onclick = async () => {
+  try {
+    const t = (await navigator.clipboard.readText()).trim();
+    if (!t) { setStatus('The clipboard is empty. In Lens, select the text and tap Copy first.', { error: true }); return; }
+    $('#ocrText').value = t;
+    $('#linkBtn').click();
+  } catch (e) {
+    setStatus("Couldn't read the clipboard. Allow clipboard access, or long-press the text box and tap Paste.", { error: true });
+  }
+};
+
 $('#linkBtn').onclick = async () => {
   const text = $('#ocrText').value.trim();
   if (!text) { setStatus('There is no text yet. Take a photo or paste some text.', { error: true }); return; }
@@ -834,7 +945,10 @@ $('#linkBtn').onclick = async () => {
   setStatus('Sending text to Sefaria…', { busy: true });
   try {
     const t0 = Date.now();
-    const { items, refData } = await runPipeline(text);
+    const [{ items, refData }, page] = await Promise.all([
+      runPipeline(text),
+      identifyPage(text).catch((e) => { logEvent('error', { where: 'identify', msg: String(e) }); return null; }),
+    ]);
 
     // Optional: AI-suggested refs not already found, each validated by Sefaria.
     let extras = [];
@@ -853,9 +967,19 @@ $('#linkBtn').onclick = async () => {
     }
 
     const { ok, bad } = renderResults(text, items, refData, extras);
-    bad.forEach((x) => logEvent('unrecognised', { text: text.slice(x.start, x.end), context: ctx(text, x.start, x.end) }));
+    setStatus('Loading the page from Sefaria…', { busy: true });
+    const pageFound = await renderPage(page);
+    if (pageFound && bad.length) {
+      // Text read straight across a page's columns: unresolved fragments are noise, not missed citations.
+      $('#failedWrap').classList.add('hidden');
+      $('#summary').textContent = `${ok.length + extras.length} linked in the pasted text. ` +
+        `${bad.length} unresolved fragment${bad.length > 1 ? 's' : ''} hidden, because the text mixes the page's columns.`;
+    } else {
+      bad.forEach((x) => logEvent('unrecognised', { text: text.slice(x.start, x.end), context: ctx(text, x.start, x.end) }));
+    }
     setStatus(`Done in ${((Date.now() - t0) / 1000).toFixed(1)} s.`);
-    if (ok.length || extras.length || bad.length) $('#resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const target = pageFound ? '#pageSection' : (ok.length || extras.length || bad.length) ? '#resultsSection' : null;
+    if (target) $(target).scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {
     setStatus(e.message, { error: true });
   } finally {
@@ -866,6 +990,14 @@ $('#linkBtn').onclick = async () => {
 // ---------- start ----------
 updateKeyNotice();
 renderLog();
+(function handleShare() {   // text shared from Lens or another app (manifest share_target)
+  const q = new URLSearchParams(location.search);
+  const shared = [q.get('title'), q.get('text')].filter(Boolean).join('\n').trim();
+  if (!shared) return;
+  history.replaceState(null, '', location.pathname);
+  $('#ocrText').value = shared;
+  setTimeout(() => $('#linkBtn').click(), 0);
+})();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW registration failed', e));
 }

@@ -19,6 +19,17 @@ Plain HTML/CSS/JS with no build step. Files: `index.html` (everything), `manifes
    Each card says how it was found. The logic is in `cite.js`; run its tests with `node tests/cite.test.js`.
 5. Anything Sefaria couldn't resolve is listed under "Not recognised" and added to the **Failure log**. You can copy the log to look for patterns.
 
+## Standard pages: identify, don't transcribe
+
+On a Vilna daf, or a Shulchan Aruch, Mishnah Berurah, Tur, Rambam or Mishnah page, OCR reads straight across the columns and mixes them up. SeferSnap therefore doesn't need a clean transcription for these. It searches Sefaria for about 20 short phrases from the text and votes on which page they come from. Then it shows that page: the texts recognised on it (Gemara, Rashi, Tosafot; Shulchan Aruch, Mishnah Berurah, Biur Halacha; …) and the sources Sefaria links from it (verses, Mishnah, Tosefta, Talmud, Ein Mishpat). Text is the only input, so a Google Lens copy works, however jumbled. A phrase found on two pages (a Mishnah quoted in the Bavli) splits its vote, and a close vote is shown as "Probably …" with the alternative. `node tests/live-identify.js` checks this against live Sefaria (behind a proxy, set `NODE_USE_ENV_PROXY=1`).
+
+## Getting text in without an API key
+
+- **Paste & find:** in Google Lens, select the text and tap Copy, then tap Paste & find in SeferSnap.
+- **Share:** SeferSnap is a share target, so text shared to it from another app opens in it and is processed straight away. Whether Lens offers Share for text depends on the phone.
+
+Gemini (with your key) remains available for reading a photo inside the app.
+
 ## Settings (stored on the device only)
 
 - **Gemini API key:** get one at aistudio.google.com/apikey.

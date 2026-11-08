@@ -101,3 +101,46 @@ t('dafOf / bookOf', () => {
   assert.strictEqual(C.bookOf('Shulchan Arukh, Orach Chayim 695:2'), 'Shulchan Arukh, Orach Chayim');
 });
 console.log(`\n${n} tests passed`);
+
+// ---- page identification
+t('pageOf maps commentaries to their page', () => {
+  const p = (r) => { const x = C.pageOf(r); return x && [x.key, x.text]; };
+  assert.deepStrictEqual(p('Tosafot on Bava Metzia 59b:11:2'), ['Bava Metzia 59b', 'Tosafot']);
+  assert.deepStrictEqual(p('Bava Metzia 59b:4'), ['Bava Metzia 59b', 'Gemara']);
+  assert.deepStrictEqual(p('Mishnah Berurah 695:3'), ['Shulchan Arukh, Orach Chayim 695', 'Mishnah Berurah']);
+  assert.deepStrictEqual(p('Turei Zahav on Shulchan Arukh, Orach Chayim 695:1'), ['Shulchan Arukh, Orach Chayim 695', 'Turei Zahav']);
+  assert.deepStrictEqual(p("Siftei Kohen on Shulchan Arukh, Yoreh De'ah 87:3"), ["Shulchan Arukh, Yoreh De'ah 87", 'Siftei Kohen']);
+  assert.deepStrictEqual(p('Kesef Mishneh on Mishneh Torah, Sabbath 2:1'), ['Mishneh Torah, Sabbath 2', 'Kesef Mishneh']);
+  assert.deepStrictEqual(p('Bartenura on Mishnah Berakhot 1:1:1'), ['Mishnah Berakhot 1', 'Bartenura']);
+  assert.deepStrictEqual(p('Beit Yosef, Orach Chayim 1:3'), ['Tur, Orach Chayim 1', 'Beit Yosef']);
+  assert.strictEqual(C.pageOf('Sefer HaOrah, Part I 67:9'), null);
+});
+
+t('probeWindows: clean, spread, no abbreviations', () => {
+  const w = C.probeWindows('א"ר זירא אמר רב מתנה ואמרי לה פתילות ושמנים שאמרו חכמים אין מדליקין בהן בשבת מדליקין בהן בחנוכה', 3);
+  assert.ok(w.length >= 2 && w.length <= 3);
+  assert.ok(w.every((q) => q.split(' ').length === 4 && !/["']/.test(q)));
+});
+
+t('pickPageHit prefers a standard page among near-ties', () => {
+  const h = (ref, s) => ({ _source: { ref }, _score: s });
+  assert.deepStrictEqual(C.pickPageHit([h('Sefer HaOrah, Part I 67:9', 10), h('Shulchan Arukh, Orach Chayim 695:2', 9.8)]), ['Shulchan Arukh, Orach Chayim 695:2']);
+  assert.deepStrictEqual(C.pickPageHit([h('Sefer HaOrah, Part I 67:9', 10), h('Shulchan Arukh, Orach Chayim 695:2', 5)]), []);
+  assert.deepStrictEqual(C.pickPageHit([h('Mishnah Berakhot 1:1', 10), h('Berakhot 2a:1', 10), h('Berakhot 2a:2', 10)]), ['Mishnah Berakhot 1:1', 'Berakhot 2a:1']);
+});
+
+t('votePage: sure, likely, unclear', () => {
+  const v = C.votePage(['Shabbat 21b:1', 'Rashi on Shabbat 21b:2:1', null, 'Tosafot on Shabbat 21b:3:1', 'Berakhot 2a:1']);
+  assert.strictEqual(v.status, 'sure');
+  assert.strictEqual(v.page.key, 'Shabbat 21b');
+  assert.deepStrictEqual(Object.keys(v.texts).sort(), ['Gemara', 'Rashi', 'Tosafot']);
+  assert.strictEqual(C.votePage(['Shabbat 21b:1', 'Shabbat 21b:2', null]).status, 'likely');
+  assert.strictEqual(C.votePage(['Shabbat 21b:1', 'Shabbat 21b:2', 'Berakhot 2a:1', 'Berakhot 2a:2']).status, 'unclear');
+  assert.strictEqual(C.votePage([null, null]).status, 'none');
+  // a tied phrase splits its vote; a page-unique phrase decides
+  const split = C.votePage([['Mishnah Berakhot 1:1', 'Berakhot 2a:1'], ['Mishnah Berakhot 1:1', 'Berakhot 2a:1'], ['Bartenura on Mishnah Berakhot 1:1:1'], ['Bartenura on Mishnah Berakhot 1:2:1'], ['Bartenura on Mishnah Berakhot 1:3:1']]);
+  assert.strictEqual(split.page.key, 'Mishnah Berakhot 1');
+  assert.strictEqual(split.status, 'sure');
+  assert.strictEqual(C.votePage(['A on Shabbat 21b:1', 'Shabbat 21b:1', 'Shabbat 21b:2', 'Berakhot 2a:1', 'Berakhot 2a:2']).status, 'likely');
+});
+console.log(`${n} tests passed (incl. page identification)`);

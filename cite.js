@@ -288,9 +288,121 @@
     return near.length > max ? { refs: [], ambiguous: true, count: near.length } : { refs: near, ambiguous: false };
   }
 
+  // ------------------------------------------------------------------ page identification
+  // Even OCR that reads straight across columns keeps short runs of words intact. Search a
+  // spread of 4-word phrases, map each hit to the printed page it belongs to, and vote.
+
+  /** Up to n evenly spread, non-overlapping phrases of clean words (no abbreviations or numbers). */
+  function probeWindows(text, n = 20, size = 4) {
+    const words = tokenize(text).map((x) => plain(x.t));
+    const clean = (w) => /^[א-ת]{2,}$/.test(w);
+    const cands = [];
+    for (let i = 0; i + size <= words.length; i++) {
+      const w = words.slice(i, i + size);
+      if (w.every(clean) && w.join('').length >= 12) cands.push({ i, q: w.join(' ') });
+    }
+    const out = [], seen = new Set();
+    let lastEnd = -1;
+    const step = Math.max(1, cands.length / n);
+    for (let k = 0; k < cands.length && out.length < n; k = Math.max(k + 1, Math.round(out.length * step))) {
+      const c = cands[k];
+      if (c.i < lastEnd || seen.has(c.q)) continue;
+      out.push(c.q); seen.add(c.q); lastEnd = c.i + size;
+    }
+    return out;
+  }
+
+  const SA_SECTIONS = "Orach Chayim|Yoreh De'ah|Even HaEzer|Choshen Mishpat";
+  const OC_COMMENTARIES = "Magen Avraham|Mishnah Berurah|Biur Halacha|Sha'ar HaTziyun|Machatzit HaShekel|Ba'er Hetev|Eliyah Rabbah";
+  const TUR_FAMILY = 'Tur|Beit Yosef|Bach|Darkhei Moshe|Drisha|Prisha|Bedek HaBayit';
+  const TUR_SECTIONS = "Orach Chayim|Yoreh Deah|Even HaEzer|Choshen Mishpat";
+
+  /**
+   * The printed page a ref sits on, e.g. "Rashi on Bava Metzia 59b:3:1" -> Bava Metzia 59b,
+   * "Mishnah Berurah 695:3" -> Shulchan Arukh, Orach Chayim 695. Returns
+   * {key, main, kind, text, section} or null for books without a standard page layout.
+   */
+  function pageOf(ref) {
+    const r = String(ref || '');
+    let m;
+    const daf = dafOf(r);
+    if (daf) {
+      const c = splitCommentary(r);
+      return { key: daf, main: daf, kind: 'talmud', text: c ? c.commentator : 'Gemara', section: c ? c.section : daf };
+    }
+    if ((m = new RegExp(`^(?:(.+?) on )?Shulchan Arukh, (${SA_SECTIONS}) (\\d+)`).exec(r))) {
+      const main = `Shulchan Arukh, ${m[2]} ${m[3]}`;
+      return { key: main, main, kind: 'sa', text: m[1] || 'Shulchan Arukh', section: m[1] ? `${m[1]} on ${main}` : main };
+    }
+    if ((m = new RegExp(`^(${OC_COMMENTARIES}) (\\d+)`).exec(r))) {
+      const main = `Shulchan Arukh, Orach Chayim ${m[2]}`;
+      return { key: main, main, kind: 'sa', text: m[1], section: `${m[1]} ${m[2]}` };
+    }
+    if ((m = new RegExp(`^(${TUR_FAMILY})(?: on Tur)?, (${TUR_SECTIONS}) (\\d+)`).exec(r))) {
+      const main = `Tur, ${m[2]} ${m[3]}`;
+      return { key: main, main, kind: 'tur', text: m[1], section: `${m[1]}, ${m[2]} ${m[3]}` };
+    }
+    if ((m = /^(?:(.+?) on )?(Mishneh Torah, [^\d]+?) (\d+)/.exec(r))) {
+      const main = `${m[2]} ${m[3]}`;
+      return { key: main, main, kind: 'rambam', text: m[1] || 'Rambam', section: m[1] ? `${m[1]} on ${main}` : main };
+    }
+    if ((m = /^(?:(.+?) on )?(Mishnah [A-Z][A-Za-z' ]+?) (\d+)/.exec(r))) {
+      const main = `${m[2]} ${m[3]}`;
+      return { key: main, main, kind: 'mishnah', text: m[1] || 'Mishnah', section: m[1] ? `${m[1]} on ${main}` : main };
+    }
+    return null;
+  }
+
+  /**
+   * The refs a probe votes for: the near-best hits that sit on a standard page, one per page.
+   * A phrase found equally on two pages (a Mishnah quoted in the Bavli) splits its vote.
+   */
+  const TIE = 0.8;   // hits within 80% of the best score count as ties (short segments score higher)
+  function pickPageHit(hits) {
+    const list = (hits || []).filter((h) => h._source && h._source.ref).sort((a, b) => (b._score || 0) - (a._score || 0));
+    if (!list.length) return [];
+    const top = list[0]._score || 0;
+    const out = [], keys = new Set();
+    for (const h of list) {
+      if ((h._score || 0) < top * TIE) break;
+      const p = pageOf(h._source.ref);
+      if (p && !keys.has(p.key)) { keys.add(p.key); out.push(h._source.ref); }
+    }
+    return out;
+  }
+
+  /**
+   * Vote over the probes; each probe is a list of refs (see pickPageHit) sharing one vote. Returns
+   * {status:'sure'|'likely'|'unclear'|'none', page, votes, probes, hits, texts:{name:{section,refs}}, runnerUp}.
+   */
+  function votePage(picks) {
+    const tally = new Map();
+    for (const pick of picks) {
+      const refs = (Array.isArray(pick) ? pick : [pick]).filter(Boolean);
+      for (const ref of refs) {
+        const p = pageOf(ref);
+        if (!p) continue;
+        if (!tally.has(p.key)) tally.set(p.key, { page: p, votes: 0, texts: {} });
+        const t = tally.get(p.key);
+        t.votes += 1 / refs.length;
+        (t.texts[p.text] = t.texts[p.text] || { section: p.section, refs: [] }).refs.push(ref);
+      }
+    }
+    const ranked = [...tally.values()].sort((a, b) => b.votes - a.votes);
+    const [first, second] = ranked;
+    const base = { probes: picks.length, hits: picks.filter((x) => (Array.isArray(x) ? x.length : x)).length };
+    if (!first) return Object.assign(base, { status: 'none' });
+    const v1 = Math.round(first.votes * 10) / 10, v2 = second ? Math.round(second.votes * 10) / 10 : 0;
+    const status = v1 >= 3 && v1 >= 2 * v2 ? 'sure'
+      : (v1 >= 3 && v1 >= 1.5 * v2) || (v1 >= 2 && v1 > v2 && v2 <= 1) ? 'likely' : 'unclear';
+    return Object.assign(base, { status, page: first.page, votes: v1, texts: first.texts,
+      runnerUp: second ? { page: second.page, votes: v2 } : null });
+  }
+
   const Cite = {
     normMarks, tokenize, plain, key, findDH, prepareForLinker, splitCommentary, dafOf, bookOf,
     sectionForDH, matchDH, findPointers, preferContext, findQuoteCandidates, pickSearchHits, QUOTE_FILTERS,
+    probeWindows, pageOf, pickPageHit, votePage,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Cite;
   else root.Cite = Cite;
