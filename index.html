@@ -541,7 +541,7 @@ function extractBody(d, depth = 0) {
   // Find a find-refs response ({body:{results:[...]}}) wherever it sits in the reply.
   if (!d || typeof d !== 'object' || depth > 5) return null;
   if (d.body && Array.isArray(d.body.results)) {
-    return { results: d.body.results, refData: d.body.ref_data || d.ref_data || {} };
+    return { results: d.body.results, refData: d.body.refData || d.body.ref_data || d.refData || d.ref_data || {} };
   }
   for (const k of ['result', 'data', 'response', 'value']) {
     let x = d[k];
