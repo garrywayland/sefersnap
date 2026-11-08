@@ -206,6 +206,7 @@ pre.log { white-space: pre-wrap; word-break: break-word; font-size: .8rem; max-h
   </form>
 </dialog>
 
+<script src="cite.js"></script>
 <script>
 'use strict';
 
@@ -636,11 +637,129 @@ async function validateRef(ref) {
   }
 }
 
+// ---------- citation pipeline (Sefaria only: no key needed) ----------
+const textCache = new Map();
+function sefariaText(ref) {
+  if (!textCache.has(ref)) {
+    textCache.set(ref, fetch(sefariaBase() + '/api/texts/' + encodeURIComponent(ref) + '?commentary=0&context=0&pad=0')
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null));
+  }
+  return textCache.get(ref);
+}
+
+async function sefariaSearch(query, filters) {
+  const body = {
+    query, type: 'text', field: 'naive_lemmatizer', slop: 2, size: 20,
+    filters, filter_fields: filters.map(() => 'path'), source_proj: ['ref', 'heRef', 'path']
+  };
+  // text/plain keeps this a "simple" request, so the browser sends no CORS preflight.
+  const r = await fetch(sefariaBase() + '/api/search-wrapper', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error('search HTTP ' + r.status);
+  const d = await r.json();
+  return (d.hits && d.hits.hits) || [];
+}
+
+async function mapLimit(list, limit, fn) {
+  const out = new Array(list.length);
+  let next = 0;
+  const worker = async () => { while (next < list.length) { const k = next++; out[k] = await fn(list[k], k); } };
+  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
+  return out;
+}
+
+const ctx = (text, s, e) => text.slice(Math.max(0, s - 40), Math.min(text.length, e + 40));
+const byStart = (a, b) => a.start - b.start || b.end - a.end;
+const MAX_QUOTE_SEARCHES = 15;
+
+async function runPipeline(text) {
+  // 2. Abbreviation fixes and ד"ה blanking, same length so offsets still match.
+  const prep = Cite.prepareForLinker(text);
+  const linker = await findRefs(prep.linkText);
+  const refData = linker.refData || {};
+  let items = (linker.results || [])
+    .filter((r) => typeof r.startChar === 'number' && typeof r.endChar === 'number')
+    .map((r) => ({ start: r.startChar, end: r.endChar, refs: (r.refs || []).slice(), kind: 'linker',
+                   failed: !!r.linkFailed || !(r.refs && r.refs.length) }))
+    .sort(byStart);
+  // An ibid-style result ("שם ע"ב") can come back with several refs: prefer the previous citation's book.
+  items.forEach((x, i) => {
+    if (x.refs.length < 2) return;
+    const prev = items.slice(0, i).reverse().find((p) => !p.failed);
+    if (prev) x.refs = Cite.preferContext(x.refs, prev.refs[0]);
+  });
+
+  // 3. ד"ה: find the comment on that daf whose dibbur hamaschil matches.
+  if (prep.dhs.length) setStatus('Matching ד"ה…', { busy: true });
+  for (const dh of prep.dhs) {
+    const sec = Cite.sectionForDH(text, dh, items.filter((x) => !x.failed));
+    if (!sec) { logEvent('dh-unresolved', { words: dh.words.join(' '), context: ctx(text, dh.start, dh.end) }); continue; }
+    const t = await sefariaText(sec.section);
+    const m = t && Cite.matchDH(t.he, dh.words);
+    let item = sec.item;
+    if (!item) {
+      item = { start: sec.nameStart, end: dh.end, refs: [sec.section], kind: 'dh', failed: false };
+      items = items.filter((x) => !(x.failed && x.start < item.end && x.end > item.start));
+      items.push(item);
+      items.sort(byStart);
+    }
+    item.end = Math.max(item.end, dh.end);
+    if (m) {
+      item.refs = [`${sec.section}:${m.seg}${m.idx ? ':' + m.idx : ''}`];
+      item.kind = 'dh';
+      item.preview = m.body;
+    } else {
+      item.refs = [sec.section];
+      item.note = `Couldn't find ד"ה ${dh.words.join(' ')} on this page; the link opens the whole page.`;
+      logEvent('dh-not-matched', { section: sec.section, words: dh.words.join(' ') });
+    }
+  }
+  items.sort(byStart);
+
+  // 4. Pointers: ע"ש, הנ"ל … refer back to an earlier citation.
+  for (const p of Cite.findPointers(text, items)) {
+    // "והרשב"א הנ"ל": the Linker flags the bare name as an unresolved citation; fold it into the pointer.
+    const name = items.find((x) => x.failed && x.end <= p.start && /^\s*$/.test(text.slice(x.end, p.start)));
+    if (name) { items = items.filter((x) => x !== name); p.start = name.start; }
+    items.push({ start: p.start, end: p.end, refs: p.target.refs.slice(0, 1), kind: 'pointer', failed: false,
+                 note: `Refers back to “${text.slice(p.target.start, p.target.end)}”`, preview: p.target.preview });
+  }
+  items.sort(byStart);
+
+  // 1. Quotations introduced by a formula: search Sefaria for the quoted words.
+  const cands = Cite.findQuoteCandidates(text, items).slice(0, MAX_QUOTE_SEARCHES);
+  if (cands.length) {
+    setStatus(`Looking up ${cands.length} quotation${cands.length > 1 ? 's' : ''}…`, { busy: true });
+    const found = await mapLimit(cands, 3, async (q) => {
+      try {
+        const filters = Cite.QUOTE_FILTERS[q.cat];
+        let pick = Cite.pickSearchHits(await sefariaSearch(q.query, filters));
+        if (!pick.refs.length && !pick.ambiguous && q.words.length > 3) {
+          pick = Cite.pickSearchHits(await sefariaSearch(q.words.slice(0, 3).join(' '), filters));
+        }
+        if (!pick.refs.length) {
+          logEvent('quote-not-found', { formula: q.formula, quote: q.query, ambiguous: !!pick.ambiguous });
+          return null;
+        }
+        return { start: q.start, end: q.end, refs: pick.refs.map((x) => x.ref), kind: 'quote', failed: false,
+                 preview: pick.refs[0].snippet, heRefs: Object.fromEntries(pick.refs.map((x) => [x.ref, x.heRef])) };
+      } catch (e) {
+        logEvent('error', { where: 'search', msg: String(e) });
+        return null;
+      }
+    });
+    items.push(...found.filter(Boolean));
+  }
+  items.sort(byStart);
+  return { items, refData };
+}
+
 // ---------- results rendering ----------
-function refBlock(ref, rd) {
-  const he = rd && (rd.heRef || rd.he_ref);
-  const textHe = rd && truncate(stripHtml(flatten(rd.he)), 220);
-  const textEn = rd && truncate(stripHtml(flatten(rd.en)), 220);
+const KIND_BADGE = { dh: 'ד"ה matched', pointer: 'Points back', quote: 'Quotation found', ai: 'AI suggestion' };
+
+function refBlock(ref, rd, opts = {}) {
+  const he = opts.heRef || (rd && (rd.heRef || rd.he_ref));
+  const textHe = opts.preview ? truncate(stripHtml(opts.preview), 220) : rd && truncate(stripHtml(flatten(rd.he)), 220);
+  const textEn = !textHe && rd ? truncate(stripHtml(flatten(rd.en)), 220) : '';
   const preview = textHe || textEn;
   const href = rd && rd.url ? 'https://www.sefaria.org/' + String(rd.url).replace(/^\/+/, '') : sefariaUrl(ref);
   return `<div class="ref">
@@ -650,42 +769,50 @@ function refBlock(ref, rd) {
   </div>`;
 }
 
-function renderResults(text, linker, extras) {
-  const results = (linker.results || []).slice().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
-  const ok = results.filter((r) => !r.linkFailed && r.refs && r.refs.length);
-  const bad = results.filter((r) => r.linkFailed || !r.refs || !r.refs.length);
+function itemCard(x, id, text, refData) {
+  const quote = x.kind === 'ai' ? x.quote : text.slice(x.start, x.end);
+  const badge = KIND_BADGE[x.kind] ? `<span class="badge ${x.kind === 'ai' || x.kind === 'quote' ? 'ai' : ''}" dir="ltr">${KIND_BADGE[x.kind]}</span>` : '';
+  const [first, ...rest] = x.refs;
+  const opt = (ref, i) => ({ heRef: x.heRefs && x.heRefs[ref], preview: i === 0 ? x.preview : '' });
+  const more = rest.length
+    ? `<details style="margin-top:8px"><summary>${rest.length} other possibilit${rest.length > 1 ? 'ies' : 'y'}</summary>
+         ${rest.map((r) => refBlock(r, refData[r], opt(r, 1))).join('')}</details>`
+    : '';
+  return `<article class="card" id="${id}">
+      <p class="quote" dir="rtl" lang="he">${esc(quote || '')}${badge}</p>
+      ${x.note ? `<p class="hint" style="margin:0 0 6px">${esc(x.note)}</p>` : ''}
+      ${refBlock(first, refData[first], opt(first, 0))}${more}
+    </article>`;
+}
 
-  // highlighted text
+function renderResults(text, items, refData, extras) {
+  const ok = items.filter((x) => !x.failed);
+  const bad = items.filter((x) => x.failed);
+
   let html = '', pos = 0;
-  results.forEach((r) => {
-    const s = r.startChar, e = r.endChar;
-    if (typeof s !== 'number' || typeof e !== 'number' || s < pos || e > text.length) return;
-    const idx = results.indexOf(r);
-    html += esc(text.slice(pos, s)) +
-      `<mark data-card="c${idx}" class="${ok.includes(r) ? '' : 'fail'}">${esc(text.slice(s, e))}</mark>`;
-    pos = e;
+  items.forEach((x, i) => {
+    if (x.start < pos || x.end > text.length) return; // overlapping: keep the first
+    html += esc(text.slice(pos, x.start)) + `<mark data-card="c${i}" class="${x.failed ? 'fail' : ''}">${esc(text.slice(x.start, x.end))}</mark>`;
+    pos = x.end;
   });
-  html += esc(text.slice(pos));
-  $('#marked').innerHTML = html;
+  $('#marked').innerHTML = html + esc(text.slice(pos));
 
-  $('#foundCards').innerHTML = ok.map((r) => `<article class="card" id="c${results.indexOf(r)}">
-      <p class="quote" dir="rtl" lang="he">${esc(r.text || text.slice(r.startChar, r.endChar))}</p>
-      ${r.refs.map((ref) => refBlock(ref, linker.refData[ref])).join('')}
-    </article>`).join('') +
-    extras.map((x) => `<article class="card">
-      <p class="quote" dir="rtl" lang="he">${esc(x.quote || '')}<span class="badge ai">AI suggestion</span></p>
-      ${refBlock(x.ref, { heRef: x.heRef, url: x.url })}
-    </article>`).join('');
+  $('#foundCards').innerHTML = ok.map((x) => itemCard(x, 'c' + items.indexOf(x), text, refData)).join('') +
+    extras.map((x, i) => itemCard(Object.assign({ kind: 'ai', refs: [x.ref], heRefs: { [x.ref]: x.heRef } }, x), 'ai' + i, text, refData)).join('');
 
-  $('#failedCards').innerHTML = bad.map((r) => `<article class="card" id="c${results.indexOf(r)}">
-      <p class="quote" dir="rtl" lang="he">${esc(r.text || text.slice(r.startChar, r.endChar))}</p>
-      <p class="hint" style="margin:0">${r.refs && r.refs.length ? '' : 'Looks like a citation, but Sefaria could not resolve it.'}</p>
+  $('#failedCards').innerHTML = bad.map((x) => `<article class="card" id="c${items.indexOf(x)}">
+      <p class="quote" dir="rtl" lang="he">${esc(text.slice(x.start, x.end))}</p>
+      <p class="hint" style="margin:0">Looks like a citation, but Sefaria could not resolve it.</p>
     </article>`).join('');
   $('#failedWrap').classList.toggle('hidden', !bad.length);
 
+  const count = (k) => ok.filter((x) => x.kind === k).length;
+  const parts = [['dh', 'via ד"ה'], ['pointer', 'pointing back'], ['quote', 'quotations']]
+    .filter(([k]) => count(k)).map(([k, label]) => `${count(k)} ${label}`);
+  if (extras.length) parts.push(`${extras.length} AI-suggested`);
   const total = ok.length + extras.length;
   $('#summary').textContent = total || bad.length
-    ? `${total} linked${extras.length ? ` (${extras.length} AI-suggested)` : ''}, ${bad.length} not recognised.`
+    ? `${total} linked${parts.length ? ' (' + parts.join(', ') + ')' : ''}, ${bad.length} not recognised.`
     : 'No citations found in this text.';
   $('#resultsSection').classList.remove('hidden');
   return { ok, bad };
@@ -707,29 +834,26 @@ $('#linkBtn').onclick = async () => {
   setStatus('Sending text to Sefaria…', { busy: true });
   try {
     const t0 = Date.now();
-    const linker = await findRefs(text);
+    const { items, refData } = await runPipeline(text);
 
     // Optional: AI-suggested refs not already found, each validated by Sefaria.
     let extras = [];
     if (settings.hybrid && aiCitations.length && aiSourceText) {
       setStatus('Checking AI-suggested citations…', { busy: true });
       const have = new Set();
-      linker.results.forEach((r) => (r.refs || []).forEach((x) => have.add(x.toLowerCase())));
+      items.forEach((x) => x.refs.forEach((r) => have.add(r.toLowerCase())));
       const cands = aiCitations.filter((c) => c && c.ref && !have.has(String(c.ref).toLowerCase())).slice(0, 20);
-      const checked = await Promise.all(cands.map(async (c) => {
+      const checked = await mapLimit(cands, 4, async (c) => {
         const v = await validateRef(String(c.ref));
         if (!v) { logEvent('ai-ref-rejected', { quote: c.quote, ref: c.ref }); return null; }
         return have.has(v.ref.toLowerCase()) ? null : Object.assign({ quote: c.quote }, v);
-      }));
+      });
       const seen = new Set();
       extras = checked.filter((x) => x && !seen.has(x.ref) && seen.add(x.ref));
     }
 
-    const { ok, bad } = renderResults(text, linker, extras);
-    bad.forEach((r) => logEvent('unrecognised', {
-      text: r.text,
-      context: text.slice(Math.max(0, r.startChar - 40), Math.min(text.length, r.endChar + 40))
-    }));
+    const { ok, bad } = renderResults(text, items, refData, extras);
+    bad.forEach((x) => logEvent('unrecognised', { text: text.slice(x.start, x.end), context: ctx(text, x.start, x.end) }));
     setStatus(`Done in ${((Date.now() - t0) / 1000).toFixed(1)} s.`);
     if (ok.length || extras.length || bad.length) $('#resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) {

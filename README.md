@@ -10,6 +10,13 @@ Plain HTML/CSS/JS with no build step. Files: `index.html` (everything), `manifes
 2. **Read text** sends the image to Gemini for OCR. The image is scaled to 2400px on its longest side by default, as JPEG at 0.85.
 3. Fix any OCR mistakes in the text box.
 4. **Find citations** sends the text to Sefaria's Linker (`/api/find-refs`). The app polls `/api/async/{task_id}` for up to 30 seconds and shows each citation as a card with a preview and an "Open in Sefaria" link.
+   SeferSnap then fills gaps the Linker leaves, using only Sefaria's public API (no key):
+   - **Abbreviations:** blanks the ה in המג"א, הט"ז, הש"ך and so on, because the Linker only recognises them without it.
+   - **ד"ה:** links `תוס' ב"מ נט ע"ב ד"ה תנור`, or `ובתוס' ד"ה …` with the daf implied, to the exact comment. It does this by matching the dibbur hamaschil on that daf.
+   - **Pointers:** links ע"ש, עיין שם, הנ"ל and `הרשב"א הנ"ל` back to the citation they refer to.
+   - **Quotations:** after a formula such as דכתיב, שנאמר, תנן or תניא, searches Sefaria for the quoted words in Tanakh, Mishnah, or Tosefta and Midrash.
+
+   Each card says how it was found. The logic is in `cite.js`; run its tests with `node tests/cite.test.js`.
 5. Anything Sefaria couldn't resolve is listed under "Not recognised" and added to the **Failure log**. You can copy the log to look for patterns.
 
 ## Settings (stored on the device only)
